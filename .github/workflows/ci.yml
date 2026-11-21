@@ -33,3 +33,6 @@ jobs:
 
       - name: oscal-cli --version
         run: .tools/oscal-cli/bin/oscal-cli --version
+
+      - name: Validate hand-written OSCAL
+        run: bash scripts/validate.sh oscal/handwritten/*.json

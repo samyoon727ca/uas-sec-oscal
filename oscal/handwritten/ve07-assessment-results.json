@@ -1,0 +1,302 @@
+{
+  "assessment-results": {
+    "uuid": "ef1a7bb0-8b8b-51e1-a64c-51ba26bb0cf3",
+    "metadata": {
+      "title": "VE-07 assessment results: SR-005 against SI-7 at commit 0d3ca38",
+      "last-modified": "2026-10-13T04:15:29Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "remarks": "Hand-written golden reference; see docs/ve07-walkthrough.md for the field mapping and UUID scheme."
+    },
+    "import-ap": {
+      "href": "ve07-assessment-plan.json"
+    },
+    "results": [
+      {
+        "uuid": "0c567bd4-c554-56fc-a919-322bff3b63c1",
+        "title": "VE-07 CI run 38345035945 (`ve07-emu`, commit 0d3ca38)",
+        "description": "Results of the `ve07-emu` GitHub Actions workflow, run 38345035945, attempt 1, triggered by `push` on `refs/heads/p2/tc05-unseal` at commit 0d3ca389ee65ba4575c00aad9b5130c4c416c5e5. The harness was `tests/ve07/boot_cases.py`.",
+        "start": "2026-10-13T04:15:29Z",
+        "props": [
+          {
+            "name": "verification-event",
+            "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+            "value": "VE-07"
+          },
+          {
+            "name": "ci-run-id",
+            "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+            "value": "38345035945"
+          },
+          {
+            "name": "ci-run-attempt",
+            "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+            "value": "1"
+          },
+          {
+            "name": "ci-workflow",
+            "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+            "value": "ve07-emu"
+          },
+          {
+            "name": "git-ref",
+            "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+            "value": "refs/heads/p2/tc05-unseal"
+          },
+          {
+            "name": "git-commit",
+            "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+            "value": "0d3ca389ee65ba4575c00aad9b5130c4c416c5e5"
+          }
+        ],
+        "reviewed-controls": {
+          "control-selections": [
+            {
+              "include-controls": [
+                {
+                  "control-id": "si-7"
+                }
+              ]
+            }
+          ]
+        },
+        "observations": [
+          {
+            "uuid": "39e153e7-135d-53bb-9fcb-59018575a501",
+            "title": "VE-07 TC-01: passed",
+            "description": "summary.json records TC-01 as `passed` (`test_cases.TC-01`) for VE-07 CI run 38345035945, attempt 1, at commit 0d3ca389ee65ba4575c00aad9b5130c4c416c5e5.\n\nRuns recorded for TC-01 in `runs`:\n\n- TC-01 (positive): Signed chain boots to the initramfs. ok: true",
+            "props": [
+              {
+                "name": "test-case",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "TC-01"
+              },
+              {
+                "name": "test-outcome",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "passed"
+              },
+              {
+                "name": "git-commit",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "0d3ca389ee65ba4575c00aad9b5130c4c416c5e5"
+              }
+            ],
+            "methods": [
+              "TEST"
+            ],
+            "types": [
+              "control-objective"
+            ],
+            "collected": "2026-10-13T04:15:29Z",
+            "relevant-evidence": [
+              {
+                "href": "../../data/upstream/evidence/ve07-ci/20261013-0d3ca38/summary.json",
+                "description": "VE-07 evidence summary for commit 0d3ca389ee65ba4575c00aad9b5130c4c416c5e5, vendored from samyoon727ca/uas-sec-p2-verified-boot (SHA-256 34d37ae64afffacef97fdbc24e5a1307d26c817a7a19c22904b2911b964e5129)."
+              },
+              {
+                "href": "https://github.com/samyoon727ca/uas-sec-p2-verified-boot/actions/runs/38345035945",
+                "description": "GitHub Actions run 38345035945 of workflow `ve07-emu`."
+              }
+            ]
+          },
+          {
+            "uuid": "52ef1f86-238c-52ce-bf91-52a83d85f87a",
+            "title": "VE-07 TC-03: passed",
+            "description": "summary.json records TC-03 as `passed` (`test_cases.TC-03`) for VE-07 CI run 38345035945, attempt 1, at commit 0d3ca389ee65ba4575c00aad9b5130c4c416c5e5.\n\nRuns recorded for TC-03 in `runs`:\n\n- TC-03a (test): Kernel changed after signing. ok: true\n- TC-03b (test): Initramfs changed after signing. ok: true\n- TC-03c (test): Devicetree changed after signing. ok: true",
+            "props": [
+              {
+                "name": "test-case",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "TC-03"
+              },
+              {
+                "name": "test-outcome",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "passed"
+              },
+              {
+                "name": "git-commit",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "0d3ca389ee65ba4575c00aad9b5130c4c416c5e5"
+              }
+            ],
+            "methods": [
+              "TEST"
+            ],
+            "types": [
+              "control-objective"
+            ],
+            "collected": "2026-10-13T04:15:29Z",
+            "relevant-evidence": [
+              {
+                "href": "../../data/upstream/evidence/ve07-ci/20261013-0d3ca38/summary.json",
+                "description": "VE-07 evidence summary for commit 0d3ca389ee65ba4575c00aad9b5130c4c416c5e5, vendored from samyoon727ca/uas-sec-p2-verified-boot (SHA-256 34d37ae64afffacef97fdbc24e5a1307d26c817a7a19c22904b2911b964e5129)."
+              },
+              {
+                "href": "https://github.com/samyoon727ca/uas-sec-p2-verified-boot/actions/runs/38345035945",
+                "description": "GitHub Actions run 38345035945 of workflow `ve07-emu`."
+              }
+            ]
+          },
+          {
+            "uuid": "f0fa1504-0308-536c-81d5-b0190663fc4b",
+            "title": "VE-07 TC-04: passed",
+            "description": "summary.json records TC-04 as `passed` (`test_cases.TC-04`) for VE-07 CI run 38345035945, attempt 1, at commit 0d3ca389ee65ba4575c00aad9b5130c4c416c5e5.\n\nRuns recorded for TC-04 in `runs`:\n\n- TC-04a (test): Built .config holds every P2 setting; each control build changes exactly one. ok: true\n- TC-04b (test): Unsigned configuration added after signing and made default. ok: true\n- TC-04c (test): Unsigned FIT. ok: true\n- TC-04d (test): FIT signed by a rogue key with the same key name. ok: true\n- TC-04e (test): Legacy uImage in the boot slot. ok: true\n- TC-04e-control (control for TC-04e): Stock U-Boot boots the same legacy uImage (via injected environment). ok: true\n- TC-04f (test): Environment injected into flash is ignored. ok: true\n- TC-04f-control (control for TC-04f): Stock U-Boot runs the injected environment. ok: true\n- TC-04g (test): Keystrokes from console start to the end of a good boot reach no prompt. ok: true\n- TC-04g-control (control for TC-04g): The same keystrokes stop autoboot when only the delay is restored. ok: true\n- TC-04h (test): Keystrokes after a refused boot reach no prompt; the board resets and refuses again. ok: true\n- TC-04h-control (control for TC-04h): The same keystrokes reach a prompt when only the reset is removed. ok: true",
+            "props": [
+              {
+                "name": "test-case",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "TC-04"
+              },
+              {
+                "name": "test-outcome",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "passed"
+              },
+              {
+                "name": "git-commit",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "0d3ca389ee65ba4575c00aad9b5130c4c416c5e5"
+              }
+            ],
+            "methods": [
+              "TEST"
+            ],
+            "types": [
+              "control-objective"
+            ],
+            "collected": "2026-10-13T04:15:29Z",
+            "relevant-evidence": [
+              {
+                "href": "../../data/upstream/evidence/ve07-ci/20261013-0d3ca38/summary.json",
+                "description": "VE-07 evidence summary for commit 0d3ca389ee65ba4575c00aad9b5130c4c416c5e5, vendored from samyoon727ca/uas-sec-p2-verified-boot (SHA-256 34d37ae64afffacef97fdbc24e5a1307d26c817a7a19c22904b2911b964e5129)."
+              },
+              {
+                "href": "https://github.com/samyoon727ca/uas-sec-p2-verified-boot/actions/runs/38345035945",
+                "description": "GitHub Actions run 38345035945 of workflow `ve07-emu`."
+              }
+            ]
+          },
+          {
+            "uuid": "4aa81d39-8b9e-5508-b5a6-ba1dedc398c9",
+            "title": "VE-07 TC-05: passed",
+            "description": "summary.json records TC-05 as `passed` (`test_cases.TC-05`) for VE-07 CI run 38345035945, attempt 1, at commit 0d3ca389ee65ba4575c00aad9b5130c4c416c5e5.\n\nRuns recorded for TC-05 in `runs`:\n\n- TC-05 (test): Keys unseal in the measured, unmodified boot state. ok: true",
+            "props": [
+              {
+                "name": "test-case",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "TC-05"
+              },
+              {
+                "name": "test-outcome",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "passed"
+              },
+              {
+                "name": "git-commit",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "0d3ca389ee65ba4575c00aad9b5130c4c416c5e5"
+              }
+            ],
+            "methods": [
+              "TEST"
+            ],
+            "types": [
+              "control-objective"
+            ],
+            "collected": "2026-10-13T04:15:29Z",
+            "relevant-evidence": [
+              {
+                "href": "../../data/upstream/evidence/ve07-ci/20261013-0d3ca38/summary.json",
+                "description": "VE-07 evidence summary for commit 0d3ca389ee65ba4575c00aad9b5130c4c416c5e5, vendored from samyoon727ca/uas-sec-p2-verified-boot (SHA-256 34d37ae64afffacef97fdbc24e5a1307d26c817a7a19c22904b2911b964e5129)."
+              },
+              {
+                "href": "https://github.com/samyoon727ca/uas-sec-p2-verified-boot/actions/runs/38345035945",
+                "description": "GitHub Actions run 38345035945 of workflow `ve07-emu`."
+              }
+            ]
+          },
+          {
+            "uuid": "449dcc9e-2d57-5a42-8b09-b4c0ac4e1d2e",
+            "title": "VE-07 TC-10: passed",
+            "description": "summary.json records TC-10 as `passed` (`test_cases.TC-10`) for VE-07 CI run 38345035945, attempt 1, at commit 0d3ca389ee65ba4575c00aad9b5130c4c416c5e5.\n\nRuns recorded for TC-10 in `runs`:\n\n- TC-10 (test): Predicted PCRs equal the measured PCRs and the event-log replay. ok: true",
+            "props": [
+              {
+                "name": "test-case",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "TC-10"
+              },
+              {
+                "name": "test-outcome",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "passed"
+              },
+              {
+                "name": "git-commit",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "0d3ca389ee65ba4575c00aad9b5130c4c416c5e5"
+              }
+            ],
+            "methods": [
+              "TEST"
+            ],
+            "types": [
+              "control-objective"
+            ],
+            "collected": "2026-10-13T04:15:29Z",
+            "relevant-evidence": [
+              {
+                "href": "../../data/upstream/evidence/ve07-ci/20261013-0d3ca38/summary.json",
+                "description": "VE-07 evidence summary for commit 0d3ca389ee65ba4575c00aad9b5130c4c416c5e5, vendored from samyoon727ca/uas-sec-p2-verified-boot (SHA-256 34d37ae64afffacef97fdbc24e5a1307d26c817a7a19c22904b2911b964e5129)."
+              },
+              {
+                "href": "https://github.com/samyoon727ca/uas-sec-p2-verified-boot/actions/runs/38345035945",
+                "description": "GitHub Actions run 38345035945 of workflow `ve07-emu`."
+              }
+            ]
+          }
+        ],
+        "findings": [
+          {
+            "uuid": "2f56c1d6-d499-5be0-b2b5-789c6971a895",
+            "title": "SR-005 against SI-7: satisfied",
+            "description": "Requirement SR-005: \"The CC shall boot only boot-chain components signed with the project boot key, verified from a hardware root of trust.\"\n\nVE-07 CI run 38345035945 at commit 0d3ca389ee65ba4575c00aad9b5130c4c416c5e5 reports `passed: true`, and test cases TC-01, TC-03, TC-04, TC-05, TC-10 are all `passed`. The SI-7 objective is therefore `satisfied` for SR-005 at this commit.",
+            "props": [
+              {
+                "name": "requirement-id",
+                "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                "value": "SR-005"
+              }
+            ],
+            "target": {
+              "type": "objective-id",
+              "target-id": "si-7_obj",
+              "title": "Assessment objective of control si-7",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "39e153e7-135d-53bb-9fcb-59018575a501"
+              },
+              {
+                "observation-uuid": "52ef1f86-238c-52ce-bf91-52a83d85f87a"
+              },
+              {
+                "observation-uuid": "f0fa1504-0308-536c-81d5-b0190663fc4b"
+              },
+              {
+                "observation-uuid": "4aa81d39-8b9e-5508-b5a6-ba1dedc398c9"
+              },
+              {
+                "observation-uuid": "449dcc9e-2d57-5a42-8b09-b4c0ac4e1d2e"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

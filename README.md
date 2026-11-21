@@ -20,13 +20,15 @@ tests/                    pytest suite
 scripts/
   install-oscal-cli.sh    install the pinned oscal-cli into .tools/ (gitignored)
   validate.sh             run `oscal-cli <model> validate` on OSCAL files
+oscal/handwritten/        hand-written OSCAL: golden VE-07 assessment results and a stub assessment plan
+docs/ve07-walkthrough.md  what the VE-07 results assert; summary.json -> OSCAL field mapping and UUID scheme
 data/upstream/            vendored inputs from uas-sec-p2-verified-boot; do not edit
   PROVENANCE.md           source repo, commit and original paths
   SHA256SUMS              digests checked by tests/test_upstream.py
   p1/requirements.csv     P1 requirements
   p1/trace.csv            P1 threat-to-requirement trace
   evidence/ve07-ci/20261013-0d3ca38/summary.json   P2 VE-07 CI evidence summary
-.github/workflows/ci.yml  tests, then installs oscal-cli and runs oscal-cli --version
+.github/workflows/ci.yml  tests, then installs oscal-cli and validates oscal/handwritten/*.json
 ```
 
 ## Running tests
