@@ -1,0 +1,5 @@
+# Vendored upstream files must stay byte-for-byte identical to their source.
+data/upstream/** -text
+
+# Shell scripts must keep LF line endings to run under bash.
+*.sh text eol=lf

@@ -1,0 +1,11 @@
+# Downloaded tools (scripts/install-oscal-cli.sh)
+.tools/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+build/
+dist/
