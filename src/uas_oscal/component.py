@@ -82,9 +82,25 @@ def normalize_timestamp(value: str) -> str:
 def commit_timestamp(paths: list[Path]) -> str:
     """Committer date (UTC) of the most recent commit that touched any of ``paths``."""
     resolved = [str(p.resolve()) for p in paths]
+    cwd = Path(resolved[0]).parent
+    # A shallow clone (e.g. actions/checkout's default fetch-depth: 1) lacks the
+    # history needed to find the commit that last touched the inputs; git log
+    # would silently report the boundary commit's date instead.
+    shallow = subprocess.run(
+        ["git", "rev-parse", "--is-shallow-repository"],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if shallow.returncode == 0 and shallow.stdout.strip() == "true":
+        raise ValueError(
+            "the git repository is a shallow clone, so the input commit date is unknown; "
+            "pass --last-modified explicitly or use a full clone (fetch-depth: 0)"
+        )
     proc = subprocess.run(
         ["git", "log", "-1", "--format=%ct", "--", *resolved],
-        cwd=Path(resolved[0]).parent,
+        cwd=cwd,
         capture_output=True,
         text=True,
         check=False,

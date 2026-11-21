@@ -132,6 +132,30 @@ def test_default_last_modified_is_the_input_commit_date(tmp_path):
     assert commit_timestamp([first, second]) == "2026-02-03T10:05:06Z"
 
 
+def test_default_last_modified_refuses_a_shallow_clone(tmp_path):
+    def git(*args, cwd=tmp_path, date=None):
+        env = dict(os.environ)
+        if date:
+            env["GIT_AUTHOR_DATE"] = env["GIT_COMMITTER_DATE"] = date
+        subprocess.run(
+            ["git", "-c", "user.name=t", "-c", "user.email=t@example.invalid", *args],
+            cwd=cwd, env=env, check=True, capture_output=True,
+        )
+
+    origin = tmp_path / "origin"
+    origin.mkdir()
+    git("init", "-q", cwd=origin)
+    (origin / "a.csv").write_text("x\n", encoding="utf-8")
+    git("add", "a.csv", cwd=origin)
+    git("commit", "-q", "-m", "a", cwd=origin, date="2026-01-02T03:04:05+00:00")
+    (origin / "b.csv").write_text("y\n", encoding="utf-8")
+    git("add", "b.csv", cwd=origin)
+    git("commit", "-q", "-m", "b", cwd=origin, date="2026-02-03T04:05:06+00:00")
+    git("clone", "-q", "--depth", "1", origin.resolve().as_uri(), "shallow")
+    with pytest.raises(ValueError, match="shallow clone"):
+        commit_timestamp([tmp_path / "shallow" / "a.csv"])
+
+
 # Content
 
 
