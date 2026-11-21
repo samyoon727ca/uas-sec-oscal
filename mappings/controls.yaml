@@ -1,0 +1,48 @@
+# Proposed mapping from P1 security requirements (data/upstream/p1/requirements.csv)
+# to NIST SP 800-53 Rev. 5 controls, using OSCAL control ids (si-7, si-7.15, ...).
+#
+# Every row is a draft for owner review. Only the owner changes a row's status to
+# `approved` (or `rejected`) and sets `approved_by`; tooling must treat anything
+# else as unapproved (see uas_oscal.mapping.is_approved).
+
+approved_by: null
+
+mappings:
+  - requirement_id: SR-003
+    controls: [sc-8, sc-8.1, sc-23]
+    rationale: >-
+      The FC "shall reject MAVLink messages that are unsigned or not signed with the
+      provisioned key", which cryptographically protects the integrity of commands in
+      transit (SC-8, SC-8(1)) and rejects messages from an unauthenticated session peer (SC-23).
+    status: proposed
+
+  - requirement_id: SR-005
+    controls: [si-7, si-7.9, si-7.15]
+    rationale: >-
+      The CC "shall boot only boot-chain components signed with the project boot key,
+      verified from a hardware root of trust", which is integrity verification of the
+      boot process (SI-7, SI-7(9)) by authenticating code signatures before execution (SI-7(15)).
+    status: proposed
+
+  - requirement_id: SR-007
+    controls: [cm-14, si-7.15]
+    rationale: >-
+      The CC "shall install only update images that are signed with the MSS release key",
+      which prevents installation of software whose signature is not from a recognized
+      certificate (CM-14) and authenticates code before installation (SI-7(15)).
+    status: proposed
+
+  - requirement_id: SR-013
+    controls: [au-3, au-10]
+    rationale: >-
+      The CC "shall log each command it forwards to the FC with a timestamp and either the
+      sending WireGuard peer or a CC-originated marker", so each record carries when the
+      event occurred and its source (AU-3) and binds each command to the peer that sent it (AU-10).
+    status: proposed
+
+  - requirement_id: SR-027
+    controls: [sc-28, sc-28.1]
+    rationale: >-
+      The GCS "shall use full-disk encryption", which protects information at rest (SC-28)
+      using cryptographic mechanisms (SC-28(1)).
+    status: proposed
