@@ -110,50 +110,80 @@ def test_cli_rejects_bad_last_modified(tmp_path, capsys):
     assert not out.exists()
 
 
-def test_default_last_modified_is_the_input_commit_date(tmp_path):
-    def git(*args, date=None):
-        env = dict(os.environ)
-        if date:
-            env["GIT_AUTHOR_DATE"] = env["GIT_COMMITTER_DATE"] = date
-        subprocess.run(
-            ["git", "-c", "user.name=t", "-c", "user.email=t@example.invalid", *args],
-            cwd=tmp_path, env=env, check=True, capture_output=True,
-        )
+def _git(cwd, *args, date=None):
+    env = dict(os.environ)
+    if date:
+        env["GIT_AUTHOR_DATE"] = env["GIT_COMMITTER_DATE"] = date
+    subprocess.run(
+        ["git", "-c", "user.name=t", "-c", "user.email=t@example.invalid", *args],
+        cwd=cwd, env=env, check=True, capture_output=True,
+    )
 
-    git("init", "-q")
+
+def test_default_last_modified_is_the_input_commit_date(tmp_path):
+    _git(tmp_path, "init", "-q")
     first, second = tmp_path / "a.csv", tmp_path / "b.csv"
     first.write_text("x\n", encoding="utf-8")
-    git("add", "a.csv")
-    git("commit", "-q", "-m", "a", date="2026-01-02T03:04:05+00:00")
+    _git(tmp_path, "add", "a.csv")
+    _git(tmp_path, "commit", "-q", "-m", "a", date="2026-01-02T03:04:05+00:00")
     second.write_text("y\n", encoding="utf-8")
-    git("add", "b.csv")
-    git("commit", "-q", "-m", "b", date="2026-02-03T04:05:06-06:00")
+    _git(tmp_path, "add", "b.csv")
+    _git(tmp_path, "commit", "-q", "-m", "b", date="2026-02-03T04:05:06-06:00")
     assert commit_timestamp([first]) == "2026-01-02T03:04:05Z"
     assert commit_timestamp([first, second]) == "2026-02-03T10:05:06Z"
 
 
 def test_default_last_modified_refuses_a_shallow_clone(tmp_path):
-    def git(*args, cwd=tmp_path, date=None):
-        env = dict(os.environ)
-        if date:
-            env["GIT_AUTHOR_DATE"] = env["GIT_COMMITTER_DATE"] = date
-        subprocess.run(
-            ["git", "-c", "user.name=t", "-c", "user.email=t@example.invalid", *args],
-            cwd=cwd, env=env, check=True, capture_output=True,
-        )
-
     origin = tmp_path / "origin"
     origin.mkdir()
-    git("init", "-q", cwd=origin)
+    _git(origin, "init", "-q")
     (origin / "a.csv").write_text("x\n", encoding="utf-8")
-    git("add", "a.csv", cwd=origin)
-    git("commit", "-q", "-m", "a", cwd=origin, date="2026-01-02T03:04:05+00:00")
+    _git(origin, "add", "a.csv")
+    _git(origin, "commit", "-q", "-m", "a", date="2026-01-02T03:04:05+00:00")
     (origin / "b.csv").write_text("y\n", encoding="utf-8")
-    git("add", "b.csv", cwd=origin)
-    git("commit", "-q", "-m", "b", cwd=origin, date="2026-02-03T04:05:06+00:00")
-    git("clone", "-q", "--depth", "1", origin.resolve().as_uri(), "shallow")
+    _git(origin, "add", "b.csv")
+    _git(origin, "commit", "-q", "-m", "b", date="2026-02-03T04:05:06+00:00")
+    _git(tmp_path, "clone", "-q", "--depth", "1", origin.resolve().as_uri(), "shallow")
     with pytest.raises(ValueError, match="shallow clone"):
         commit_timestamp([tmp_path / "shallow" / "a.csv"])
+
+
+def test_default_last_modified_refuses_uncommitted_inputs(tmp_path):
+    _git(tmp_path, "init", "-q")
+    committed, untracked = tmp_path / "a.csv", tmp_path / "b.csv"
+    committed.write_text("x\n", encoding="utf-8")
+    _git(tmp_path, "add", "a.csv")
+    _git(tmp_path, "commit", "-q", "-m", "a", date="2026-01-02T03:04:05+00:00")
+    untracked.write_text("y\n", encoding="utf-8")
+    with pytest.raises(ValueError, match=r"uncommitted changes \(.*b\.csv"):
+        commit_timestamp([committed, untracked])
+    assert commit_timestamp([committed]) == "2026-01-02T03:04:05Z"
+    committed.write_text("changed\n", encoding="utf-8")
+    with pytest.raises(ValueError, match=r"uncommitted changes \(.*a\.csv"):
+        commit_timestamp([committed])
+
+
+# Malformed inputs
+
+
+@pytest.mark.parametrize(
+    ("flag", "content", "message"),
+    [
+        ("--trace", "threat,req\nTHR-001,SR-001\n", "missing column(s) threat_id, req_id"),
+        ("--trace", "", "missing column(s) threat_id, req_id"),
+        ("--trace", "threat_id,req_id\nTHR-001\n", ":2: missing value(s) for req_id"),
+        ("--requirements", "id,statement\nSR-001,x\n", "missing column(s) req_id, allocated_to"),
+    ],
+)
+def test_malformed_csv_is_a_clean_cli_error(tmp_path, capsys, flag, content, message):
+    bad = tmp_path / "bad.csv"
+    bad.write_text(content, encoding="utf-8")
+    out = tmp_path / "cd.json"
+    assert main(["component", flag, str(bad), "--last-modified", FIXED, "-o", str(out)]) == 1
+    err = capsys.readouterr().err
+    assert err.startswith(f"uas-oscal component: {bad}")
+    assert message in err
+    assert not out.exists()
 
 
 # Content

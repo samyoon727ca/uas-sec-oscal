@@ -42,6 +42,10 @@ CATALOG_HREF = (
     "nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json"
 )
 
+# Columns the generator reads from the P1 CSVs.
+REQUIREMENT_COLUMNS = ("req_id", "statement", "allocated_to", "verification", "evidence_repo")
+TRACE_COLUMNS = ("threat_id", "req_id")
+
 # P1 verification methods (requirements.csv `verification` column).
 VERIFICATION_METHODS = {"T": "test", "D": "demonstration", "I": "inspection", "A": "analysis"}
 
@@ -54,17 +58,31 @@ def _prop(name: str, value: str) -> dict[str, str]:
     return {"name": name, "ns": UAS_NS, "value": value}
 
 
-def load_requirements(path: Path = DEFAULT_REQUIREMENTS) -> dict[str, dict[str, str]]:
+def _read_csv(path: Path, columns: tuple[str, ...]) -> list[dict[str, str]]:
+    """Read ``path`` as CSV; raise ``ValueError`` naming the file if a required column or value is missing."""
     with path.open(encoding="utf-8", newline="") as f:
-        return {row["req_id"]: row for row in csv.DictReader(f)}
+        reader = csv.DictReader(f)
+        missing = [c for c in columns if c not in (reader.fieldnames or [])]
+        if missing:
+            raise ValueError(f"{path}: missing column(s) {', '.join(missing)}")
+        rows = []
+        for row in reader:
+            short = [c for c in columns if row[c] is None]
+            if short:
+                raise ValueError(f"{path}:{reader.line_num}: missing value(s) for {', '.join(short)}")
+            rows.append(row)
+    return rows
+
+
+def load_requirements(path: Path = DEFAULT_REQUIREMENTS) -> dict[str, dict[str, str]]:
+    return {row["req_id"]: row for row in _read_csv(path, REQUIREMENT_COLUMNS)}
 
 
 def load_trace(path: Path = DEFAULT_TRACE) -> dict[str, list[str]]:
     """Map each requirement ID to its sorted, de-duplicated threat IDs."""
     threats: dict[str, set[str]] = {}
-    with path.open(encoding="utf-8", newline="") as f:
-        for row in csv.DictReader(f):
-            threats.setdefault(row["req_id"], set()).add(row["threat_id"])
+    for row in _read_csv(path, TRACE_COLUMNS):
+        threats.setdefault(row["req_id"], set()).add(row["threat_id"])
     return {req: sorted(ids) for req, ids in threats.items()}
 
 
@@ -97,6 +115,21 @@ def commit_timestamp(paths: list[Path]) -> str:
         raise ValueError(
             "the git repository is a shallow clone, so the input commit date is unknown; "
             "pass --last-modified explicitly or use a full clone (fetch-depth: 0)"
+        )
+    # Uncommitted or untracked inputs would get the date of an older commit
+    # that does not describe their content.
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "--", *resolved],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if status.returncode == 0 and status.stdout.strip():
+        changed = "; ".join(line.strip() for line in status.stdout.strip().splitlines())
+        raise ValueError(
+            f"input files have uncommitted changes ({changed}); "
+            "commit them or pass --last-modified explicitly"
         )
     proc = subprocess.run(
         ["git", "log", "-1", "--format=%ct", "--", *resolved],
@@ -217,12 +250,13 @@ def generate(
 
     ``last_modified`` defaults to the date of the latest commit that touched an input.
     """
+    # Load the CSVs first so a malformed header is reported as such, before
+    # load_mapping reads requirements.csv for its requirement IDs.
+    requirements = load_requirements(requirements_path)
+    trace = load_trace(trace_path)
     mapping = load_mapping(mapping_path, requirements_path)
     if last_modified is None:
         last_modified = commit_timestamp([requirements_path, trace_path, mapping_path])
     else:
         last_modified = normalize_timestamp(last_modified)
-    doc = build_component_definition(
-        mapping, load_requirements(requirements_path), load_trace(trace_path), last_modified
-    )
-    return render(doc)
+    return render(build_component_definition(mapping, requirements, trace, last_modified))
