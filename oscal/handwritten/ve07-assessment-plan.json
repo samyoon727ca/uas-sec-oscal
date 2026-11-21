@@ -1,0 +1,41 @@
+{
+  "assessment-plan": {
+    "uuid": "72792f9b-6cfc-5047-9bec-ef541b978535",
+    "metadata": {
+      "title": "VE-07 assessment plan (stub)",
+      "last-modified": "2026-10-13T04:15:29Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "remarks": "Minimal stub so that the import-ap of ve07-assessment-results.json resolves. See docs/ve07-walkthrough.md."
+    },
+    "import-ssp": {
+      "href": "#202a8f19-b629-5aca-bfdf-071fa093c95a"
+    },
+    "reviewed-controls": {
+      "control-selections": [
+        {
+          "include-controls": [
+            {
+              "control-id": "si-7"
+            }
+          ]
+        }
+      ]
+    },
+    "back-matter": {
+      "resources": [
+        {
+          "uuid": "202a8f19-b629-5aca-bfdf-071fa093c95a",
+          "title": "System security plan (not yet written)",
+          "description": "This project has no system security plan yet, so the import-ssp of this stub points here instead of at an SSP file. The link is to the P1 requirements, which allocate SR-005 to component CMP-CC.",
+          "rlinks": [
+            {
+              "href": "../../data/upstream/p1/requirements.csv",
+              "media-type": "text/csv"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
