@@ -59,7 +59,11 @@ def _prop(name: str, value: str) -> dict[str, str]:
 
 
 def _read_csv(path: Path, columns: tuple[str, ...]) -> list[dict[str, str]]:
-    """Read ``path`` as CSV; raise ``ValueError`` naming the file if a required column or value is missing."""
+    """Read ``path`` as CSV; raise ``ValueError`` naming the file if a required column or value is missing.
+
+    A required value is missing if the row is too short to have it or if it is
+    empty or whitespace-only. Values that are present are returned unchanged.
+    """
     with path.open(encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
         missing = [c for c in columns if c not in (reader.fieldnames or [])]
@@ -67,9 +71,9 @@ def _read_csv(path: Path, columns: tuple[str, ...]) -> list[dict[str, str]]:
             raise ValueError(f"{path}: missing column(s) {', '.join(missing)}")
         rows = []
         for row in reader:
-            short = [c for c in columns if row[c] is None]
-            if short:
-                raise ValueError(f"{path}:{reader.line_num}: missing value(s) for {', '.join(short)}")
+            empty = [c for c in columns if row[c] is None or not row[c].strip()]
+            if empty:
+                raise ValueError(f"{path}:{reader.line_num}: missing value(s) for {', '.join(empty)}")
             rows.append(row)
     return rows
 

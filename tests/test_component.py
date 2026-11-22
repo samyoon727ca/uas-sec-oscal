@@ -165,6 +165,9 @@ def test_default_last_modified_refuses_uncommitted_inputs(tmp_path):
 
 # Malformed inputs
 
+# The full header of the vendored requirements.csv.
+REQ_HEADER = "req_id,statement,rationale,allocated_to,verification,evidence_repo,resiliency_approach\n"
+
 
 @pytest.mark.parametrize(
     ("flag", "content", "message"),
@@ -173,6 +176,9 @@ def test_default_last_modified_refuses_uncommitted_inputs(tmp_path):
         ("--trace", "", "missing column(s) threat_id, req_id"),
         ("--trace", "threat_id,req_id\nTHR-001\n", ":2: missing value(s) for req_id"),
         ("--requirements", "id,statement\nSR-001,x\n", "missing column(s) req_id, allocated_to"),
+        ("--trace", "threat_id,req_id\nTHR-001,SR-001\nTHR-008,\n", ":3: missing value(s) for req_id"),
+        ("--requirements", REQ_HEADER + "SR-005,,r,CMP-CC,T,P2,a\n", ":2: missing value(s) for statement"),
+        ("--requirements", REQ_HEADER + "SR-005,s,r,CMP-CC, \t,P2,a\n", ":2: missing value(s) for verification"),
     ],
 )
 def test_malformed_csv_is_a_clean_cli_error(tmp_path, capsys, flag, content, message):
