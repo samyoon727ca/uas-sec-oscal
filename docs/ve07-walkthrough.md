@@ -1,6 +1,6 @@
 # VE-07 assessment results: walkthrough
 
-`oscal/handwritten/ve07-assessment-results.json` is a hand-written OSCAL 1.1.2 assessment-results document for one P2 CI run: the VE-07 evidence summary in `data/upstream/evidence/ve07-ci/20261013-0d3ca38/summary.json`. It is the golden reference for the `uas-oscal results` generator. The generator must reproduce the file from `summary.json`, and this page is its spec.
+`oscal/handwritten/ve07-assessment-results.json` is a hand-written OSCAL 1.1.2 assessment-results document for one P2 CI run: the VE-07 evidence summary in `data/upstream/evidence/ve07-ci/20261013-0d3ca38/summary.json`. It is the golden reference for the `uas-oscal results` generator. The generator must reproduce the file from `summary.json`, and this page is its spec. Its output, `oscal/generated/ve07-assessment-results.json`, differs from the golden file only in the ways listed in `INTENTIONAL_DIFFERENCES` in `tests/test_results.py`. For example, it has a finding for every control that `mappings/controls.yaml` maps to SR-005, and it carries draft marking while the mapping is unapproved.
 
 `oscal/handwritten/ve07-assessment-plan.json` is a minimal assessment-plan stub. The results document's `import-ap` points to it, so the href resolves to a real file. oscal-cli 1.0.3 does not follow `import-ap` when it validates, so the stub is not needed for validation itself. The project has no system security plan yet, so the stub's `import-ssp` points to a back-matter resource that says so and links to the P1 requirements.
 

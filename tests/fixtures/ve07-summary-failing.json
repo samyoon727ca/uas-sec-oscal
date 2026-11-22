@@ -1,0 +1,50 @@
+{
+  "event": "VE-07",
+  "harness": "tests/ve07/boot_cases.py",
+  "environment": {
+    "kind": "ci",
+    "run_id": "38345099999",
+    "run_attempt": "2",
+    "run_url": "https://github.com/samyoon727ca/uas-sec-p2-verified-boot/actions/runs/38345099999",
+    "workflow": "ve07-emu",
+    "event": "pull_request",
+    "ref": "refs/pull/99/merge",
+    "sha": "1111111111111111111111111111111111111111"
+  },
+  "date_utc": "2026-10-14T09:00:00Z",
+  "git": {
+    "commit": "1111111111111111111111111111111111111111"
+  },
+  "passed": false,
+  "test_cases": {
+    "TC-01": "passed",
+    "TC-03": "failed"
+  },
+  "notes": "Test fixture, not real evidence: TC-03b booted an initramfs changed after signing.",
+  "runs": [
+    {
+      "id": "TC-01",
+      "tc": "TC-01",
+      "role": "positive",
+      "title": "Signed chain boots to the initramfs",
+      "control_for": null,
+      "ok": true
+    },
+    {
+      "id": "TC-03a",
+      "tc": "TC-03",
+      "role": "test",
+      "title": "Kernel changed after signing",
+      "control_for": null,
+      "ok": true
+    },
+    {
+      "id": "TC-03b",
+      "tc": "TC-03",
+      "role": "test",
+      "title": "Initramfs changed after signing",
+      "control_for": null,
+      "ok": false
+    }
+  ]
+}
