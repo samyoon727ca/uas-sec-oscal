@@ -101,54 +101,68 @@ def normalize_timestamp(value: str) -> str:
     return parsed.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def commit_timestamp(paths: list[Path]) -> str:
-    """Committer date (UTC) of the most recent commit that touched any of ``paths``."""
-    resolved = [str(p.resolve()) for p in paths]
-    cwd = Path(resolved[0]).parent
+def _git(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=False)
+
+
+def _stderr(proc: subprocess.CompletedProcess[str]) -> str:
+    return f" ({proc.stderr.strip()})" if proc.stderr.strip() else ""
+
+
+def _repo_commit_seconds(files: list[str]) -> int:
+    """Committer date (Unix seconds) of the latest commit that touched ``files``, all in one work tree."""
+    cwd = Path(files[0]).parent
     # A shallow clone (e.g. actions/checkout's default fetch-depth: 1) lacks the
     # history needed to find the commit that last touched the inputs; git log
     # would silently report the boundary commit's date instead.
-    shallow = subprocess.run(
-        ["git", "rev-parse", "--is-shallow-repository"],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    shallow = _git(["rev-parse", "--is-shallow-repository"], cwd)
     if shallow.returncode == 0 and shallow.stdout.strip() == "true":
         raise ValueError(
-            "the git repository is a shallow clone, so the input commit date is unknown; "
+            f"the git repository of {files[0]} is a shallow clone, so the input commit date is unknown; "
             "pass --last-modified explicitly or use a full clone (fetch-depth: 0)"
         )
     # Uncommitted or untracked inputs would get the date of an older commit
     # that does not describe their content.
-    status = subprocess.run(
-        ["git", "status", "--porcelain", "--", *resolved],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if status.returncode == 0 and status.stdout.strip():
+    status = _git(["status", "--porcelain", "--", *files], cwd)
+    if status.returncode != 0:
+        raise ValueError(
+            f"cannot check {', '.join(files)} for uncommitted changes; "
+            "pass --last-modified explicitly" + _stderr(status)
+        )
+    if status.stdout.strip():
         changed = "; ".join(line.strip() for line in status.stdout.strip().splitlines())
         raise ValueError(
             f"input files have uncommitted changes ({changed}); "
             "commit them or pass --last-modified explicitly"
         )
-    proc = subprocess.run(
-        ["git", "log", "-1", "--format=%ct", "--", *resolved],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    seconds = proc.stdout.strip()
-    if proc.returncode != 0 or not seconds.isdigit():
+    log = _git(["log", "-1", "--format=%ct", "--", *files], cwd)
+    seconds = log.stdout.strip()
+    if log.returncode != 0 or not seconds.isdigit():
         raise ValueError(
-            "cannot find a git commit for the input files; pass --last-modified explicitly"
-            + (f" ({proc.stderr.strip()})" if proc.stderr.strip() else "")
+            f"cannot find a git commit for {', '.join(files)}; "
+            "pass --last-modified explicitly" + _stderr(log)
         )
-    return datetime.fromtimestamp(int(seconds), tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return int(seconds)
+
+
+def commit_timestamp(paths: list[Path]) -> str:
+    """Committer date (UTC) of the most recent commit that touched any of ``paths``.
+
+    The inputs may sit in different git work trees: each work tree is queried
+    for its own inputs, and the latest date wins.
+    """
+    by_repo: dict[str, list[str]] = {}
+    for path in paths:
+        resolved = path.resolve()
+        top = _git(["rev-parse", "--show-toplevel"], resolved.parent)
+        if top.returncode != 0 or not top.stdout.strip():
+            raise ValueError(
+                f"{path} is not in a git work tree, so its commit date is unknown; "
+                "pass --last-modified explicitly" + _stderr(top)
+            )
+        by_repo.setdefault(top.stdout.strip(), []).append(str(resolved))
+    seconds = max(_repo_commit_seconds(files) for files in by_repo.values())
+    return datetime.fromtimestamp(seconds, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _description(req: dict[str, str], row: dict[str, Any], control: str, threats: list[str]) -> str:

@@ -163,6 +163,43 @@ def test_default_last_modified_refuses_uncommitted_inputs(tmp_path):
         commit_timestamp([committed])
 
 
+def _commit_copy(repo, src, date):
+    repo.mkdir(exist_ok=True)
+    if not (repo / ".git").exists():
+        _git(repo, "init", "-q")
+    dst = repo / src.name
+    dst.write_bytes(src.read_bytes())
+    _git(repo, "add", src.name)
+    _git(repo, "commit", "-q", "-m", src.name, date=date)
+    return dst
+
+
+def test_default_last_modified_spans_inputs_in_different_repos(tmp_path):
+    # The P1 CSVs in one repository, the mapping in another (e.g. --mapping outside this repo).
+    data, maps = tmp_path / "data", tmp_path / "maps"
+    requirements = _commit_copy(data, DEFAULT_REQUIREMENTS, "2026-01-02T03:04:05+00:00")
+    trace = _commit_copy(data, DEFAULT_TRACE, "2026-01-02T03:04:05+00:00")
+    mapping = _commit_copy(maps, DEFAULT_MAPPING, "2026-02-03T04:05:06+00:00")
+    assert commit_timestamp([requirements, trace, mapping]) == "2026-02-03T04:05:06Z"
+    assert commit_timestamp([mapping, requirements]) == "2026-02-03T04:05:06Z"
+    out = tmp_path / "cd.json"
+    argv = ["component", "--requirements", str(requirements), "--trace", str(trace), "--mapping", str(mapping)]
+    assert main([*argv, "-o", str(out)]) == 0
+    doc = json.loads(out.read_text(encoding="utf-8"))
+    assert doc["component-definition"]["metadata"]["last-modified"] == "2026-02-03T04:05:06Z"
+
+
+def test_default_last_modified_refuses_an_input_outside_git(tmp_path, monkeypatch):
+    committed = _commit_copy(tmp_path / "repo", DEFAULT_MAPPING, "2026-01-02T03:04:05+00:00")
+    plain = tmp_path / "plain" / "trace.csv"
+    plain.parent.mkdir()
+    plain.write_text("threat_id,req_id\n", encoding="utf-8")
+    # Keep git from finding a repository above tmp_path.
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.resolve()))
+    with pytest.raises(ValueError, match=r"trace\.csv is not in a git work tree"):
+        commit_timestamp([committed, plain])
+
+
 # Malformed inputs
 
 # The full header of the vendored requirements.csv.
