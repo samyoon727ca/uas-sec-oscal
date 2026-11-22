@@ -6,3 +6,6 @@ data/upstream/** -text
 
 # Generated OSCAL is written with LF; keep the checkout byte-identical to generator output.
 oscal/generated/** text eol=lf
+
+# The rendered results page is written with LF; keep the checkout byte-identical to render output.
+docs/results/** text eol=lf

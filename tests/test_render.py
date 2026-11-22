@@ -12,7 +12,9 @@ from uas_oscal.render import (
     DEFAULT_OUTPUT,
     DEFAULT_RESULTS,
     RenderError,
+    _code,
     _evidence_link,
+    _inline,
     generate,
 )
 
@@ -177,7 +179,7 @@ def test_absolute_evidence_url_is_encoded(tmp_path):
     results = tmp_path / "oscal" / "results.json"
     link = _evidence_link("https://example.com/a b(1)|<x>.json?q=%41", results, tmp_path / "out.md")
     assert link == (
-        r"[https://example.com/a b(1)\|<x>.json?q=%41]"
+        r"[https://example.com/a b(1)\|\<x\>.json?q=%41]"
         "(https://example.com/a%20b%281%29%7C%3Cx%3E.json?q=%41)"
     )
 
@@ -187,6 +189,65 @@ def test_run_url_is_encoded(tmp_path):
     link = _evidence_link("https://github.com/o/r(x)/actions/runs/1", results, tmp_path / "out.md")
     assert link == "[CI run 1](https://github.com/o/r%28x%29/actions/runs/1)"
 
+
+def test_input_values_are_escaped_everywhere(tmp_path):
+    def set_result_prop(result, name, value):
+        _prop(result, name)["value"] = value
+
+    def change_ar(ar):
+        result = ar["results"][0]
+        set_result_prop(result, "verification-event", "VE-#7 *x*\n<i>")
+        set_result_prop(result, "ci-workflow", "`wf`")
+        set_result_prop(result, "ci-run-id", "1_2")
+        set_result_prop(result, "ci-run-attempt", "[a]")
+        set_result_prop(result, "git-ref", "feat/`x`*y*[z]<b>|")
+        set_result_prop(result, "git-commit", "ab``cdef")
+        result["start"] = "2026 <b>*now*</b>"
+        for obs in result["observations"]:
+            obs["relevant-evidence"] = [ev for ev in obs["relevant-evidence"] if "://" not in ev["href"]]
+
+    ar, cd = _copy(tmp_path, change_ar)
+    text = generate(ar, cd, tmp_path / "out.md")
+    lines = text.splitlines()
+    assert lines[0] == r"# VE-\#7 \*x\* \<i\> assessment results"
+    assert r"- **Run:** `` `wf` `` run 1\_2, attempt \[a\]" in lines
+    assert r"- **Commit:** ```ab``cde``` on ``feat/`x`*y*[z]<b>|``" in lines
+    assert r"- **Date:** 2026 \<b\>\*now\*\</b\>" in lines
+    assert r"## Mapped requirements not assessed by VE-\#7 \*x\* \<i\>" in lines
+    assert r"from the VE-\#7 \*x\* \<i\> CI evidence" in text
+    # Raw HTML and emphasis survive only inside the ref's code span.
+    assert text.count("<b>") == text.count("*y*") == 1
+    for raw in ("<i>", "*x*", "*now*", "</b>"):
+        assert raw not in text
+
+
+@pytest.mark.parametrize(
+    ("value", "escaped"),
+    [
+        ("- x", r"\- x"),
+        ("+ x", r"\+ x"),
+        ("12. x", r"12\. x"),
+        ("3) x", r"3\) x"),
+        ("a\n\n  b\tc", "a b c"),
+        ("x|y\\z~$!", r"x\|y\\z\~\$\!"),
+        ("SR-005", "SR-005"),
+    ],
+)
+def test_inline_escape(value, escaped):
+    assert _inline(value) == escaped
+
+
+@pytest.mark.parametrize(
+    ("value", "span"),
+    [
+        ("main", "`main`"),
+        ("a`b", "``a`b``"),
+        ("`a``", "``` `a`` ```"),
+        ("a\nb", "`a b`"),
+    ],
+)
+def test_code_span(value, span):
+    assert _code(value) == span
 
 # Errors
 
