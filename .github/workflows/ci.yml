@@ -39,3 +39,56 @@ jobs:
 
       - name: Validate generated OSCAL
         run: bash scripts/validate.sh oscal/generated/component-definition.json oscal/generated/ve07-assessment-results.json
+
+  rebuild:
+    # Regenerates every committed output from the current inputs and fails if the
+    # result differs from what is committed, then validates all OSCAL JSON.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # `uas-oscal component` dates its output from the git history of its inputs.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Rebuild component definition
+        run: >-
+          uas-oscal component --requirements data/upstream/p1/requirements.csv --trace data/upstream/p1/trace.csv
+          --mapping mappings/controls.yaml -o oscal/generated/component-definition.json
+
+      - name: Rebuild VE-07 assessment results
+        run: >-
+          uas-oscal results --summary data/upstream/evidence/ve07-ci/20261013-0d3ca38/summary.json
+          --mapping mappings/controls.yaml --ve VE-07 -o oscal/generated/ve07-assessment-results.json
+
+      - name: Rebuild rendered results page
+        run: >-
+          uas-oscal render --results oscal/generated/ve07-assessment-results.json
+          --component oscal/generated/component-definition.json -o docs/results/ve07.md
+
+      - name: Fail if committed outputs are stale
+        run: |
+          git diff --exit-code -- oscal/generated/ docs/results/
+          untracked="$(git ls-files --others --exclude-standard -- oscal/generated/ docs/results/)"
+          if [ -n "$untracked" ]; then
+            echo "Generated files are not committed:"
+            echo "$untracked"
+            exit 1
+          fi
+
+      - name: Install oscal-cli (pinned, checksum verified)
+        run: bash scripts/install-oscal-cli.sh
+
+      - name: Validate all OSCAL JSON
+        run: bash scripts/validate.sh oscal/handwritten/*.json oscal/generated/*.json
