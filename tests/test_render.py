@@ -7,7 +7,14 @@ import pytest
 
 from uas_oscal.cli import main
 from uas_oscal.component import UAS_NS
-from uas_oscal.render import DEFAULT_COMPONENT, DEFAULT_OUTPUT, DEFAULT_RESULTS, _evidence_link, generate
+from uas_oscal.render import (
+    DEFAULT_COMPONENT,
+    DEFAULT_OUTPUT,
+    DEFAULT_RESULTS,
+    RenderError,
+    _evidence_link,
+    generate,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 SUMMARY = ROOT / "data" / "upstream" / "evidence" / "ve07-ci" / "20261013-0d3ca38" / "summary.json"
@@ -41,6 +48,10 @@ def _set_status(obj, status):
     for prop in obj["props"]:
         if prop["ns"] == UAS_NS and prop["name"] == "mapping-status":
             prop["value"] = status
+
+
+def _prop(obj, name):
+    return next(p for p in obj["props"] if p["ns"] == UAS_NS and p["name"] == name)
 
 
 def _approve_all(ar=None, cd=None):
@@ -150,17 +161,31 @@ def test_evidence_links_are_relative_to_the_output(tmp_path):
 
 def test_table_cells_are_escaped(tmp_path):
     def change_ar(ar):
-        ar["results"][0]["observations"][0]["props"][1]["value"] = "a|b"
+        _prop(ar["results"][0]["observations"][0], "test-outcome")["value"] = "a|b"
 
     ar, cd = _copy(tmp_path, change_ar)
     assert "| TC-01 | a\\|b |" in generate(ar, cd, tmp_path / "out.md")
-
 
 
 def test_evidence_link_text_is_escaped(tmp_path):
     results = tmp_path / "oscal" / "results.json"
     link = _evidence_link("ev/a|b]c.json", results, tmp_path / "out.md")
     assert link == r"[a\|b\]c.json](oscal/ev/a%7Cb%5Dc.json)"
+
+
+def test_absolute_evidence_url_is_encoded(tmp_path):
+    results = tmp_path / "oscal" / "results.json"
+    link = _evidence_link("https://example.com/a b(1)|<x>.json?q=%41", results, tmp_path / "out.md")
+    assert link == (
+        r"[https://example.com/a b(1)\|<x>.json?q=%41]"
+        "(https://example.com/a%20b%281%29%7C%3Cx%3E.json?q=%41)"
+    )
+
+
+def test_run_url_is_encoded(tmp_path):
+    results = tmp_path / "oscal" / "results.json"
+    link = _evidence_link("https://github.com/o/r(x)/actions/runs/1", results, tmp_path / "out.md")
+    assert link == "[CI run 1](https://github.com/o/r%28x%29/actions/runs/1)"
 
 
 # Errors
@@ -180,6 +205,26 @@ def test_finding_missing_from_component_definition_is_an_error(tmp_path, capsys)
     assert not out.exists()
 
 
+def test_duplicate_finding_is_an_error(tmp_path):
+    def change_ar(ar):
+        findings = ar["results"][0]["findings"]
+        findings.append(json.loads(json.dumps(findings[0])))
+
+    ar, cd = _copy(tmp_path, change_ar)
+    with pytest.raises(RenderError, match="duplicate finding for SR-005 / si-7"):
+        generate(ar, cd, tmp_path / "out.md")
+
+
+def test_duplicate_implemented_requirement_is_an_error(tmp_path):
+    def change_cd(cd):
+        irs = cd["components"][0]["control-implementations"][0]["implemented-requirements"]
+        irs.append(json.loads(json.dumps(irs[0])))
+
+    ar, cd = _copy(tmp_path, change_cd=change_cd)
+    with pytest.raises(RenderError, match="duplicate implemented requirement for SR-003"):
+        generate(ar, cd, tmp_path / "out.md")
+
+
 @pytest.mark.parametrize(
     ("content", "message"),
     [
@@ -197,7 +242,7 @@ def test_bad_results_file_is_a_clean_cli_error(tmp_path, capsys, content, messag
 
 
 def test_prop_without_value_is_an_error(tmp_path, capsys):
-    ar, cd = _copy(tmp_path, lambda d: d["results"][0]["props"][1].pop("value"))
+    ar, cd = _copy(tmp_path, lambda d: _prop(d["results"][0], "ci-run-id").pop("value"))
     out = tmp_path / "out.md"
     assert main(["render", "--results", str(ar), "--component", str(cd), "-o", str(out)]) == 1
     err = capsys.readouterr().err

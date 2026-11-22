@@ -83,6 +83,16 @@ def _link_text(text: str) -> str:
     return _cell(text).replace("[", "\\[").replace("]", "\\]")
 
 
+def _url(href: str) -> str:
+    """Percent-encode an absolute URL for use as a Markdown link destination.
+
+    Spaces, parentheses, angle brackets, square brackets, pipes and other characters
+    that would end or break the link (or the table cell) are encoded; existing
+    ``%XX`` escapes and URL delimiters are kept.
+    """
+    return quote(href, safe="/:?#@!$&'*+,;=%~")
+
+
 def _load(path: Path, root: str) -> dict[str, Any]:
     try:
         doc = json.loads(path.read_text(encoding="utf-8"))
@@ -105,9 +115,9 @@ def _evidence_link(href: str, results_path: Path, output: Path) -> str:
     """Markdown link to an evidence href, rebased from the results file to the output."""
     match = RUN_URL_RE.fullmatch(href)
     if match:
-        return f"[CI run {match.group(2)}]({href})"
+        return f"[CI run {match.group(2)}]({_url(href)})"
     if "://" in href:
-        return f"[{_link_text(href)}]({href})"
+        return f"[{_link_text(href)}]({_url(href)})"
     target = results_path.parent / href
     return f"[{_link_text(posixpath.basename(href))}]({quote(_link(target, output))})"
 
@@ -153,6 +163,8 @@ def build_markdown(results_path: Path, component_path: Path, output: Path) -> st
             for ir in _get(ci, "implemented-requirements"):
                 where = f"implemented requirement {ir.get('uuid', '?')}"
                 key = (_prop(ir, "requirement-id", where), _get(ir, "control-id"))
+                if key in implemented:
+                    raise RenderError(f"{where}: duplicate implemented requirement for {key[0]} / {key[1]}")
                 implemented[key] = _prop(ir, "mapping-status", where)
 
     # (requirement, control) -> finding
@@ -169,6 +181,8 @@ def build_markdown(results_path: Path, component_path: Path, output: Path) -> st
                 f"{where}: {key[0]} / {key[1]} is not in the component definition; "
                 "regenerate both documents from the same mapping"
             )
+        if key in findings:
+            raise RenderError(f"{where}: duplicate finding for {key[0]} / {key[1]}")
         findings[key] = finding
 
     assessed = list(dict.fromkeys(req for req, _ in findings))
@@ -198,11 +212,11 @@ def build_markdown(results_path: Path, component_path: Path, output: Path) -> st
         out.append("")
 
     run_text = f"`{workflow}` run {run_id}, attempt {attempt}"
-    out.append(f"- **Run:** [{run_text}]({run_url})" if run_url else f"- **Run:** {run_text}")
+    out.append(f"- **Run:** [{run_text}]({_url(run_url)})" if run_url else f"- **Run:** {run_text}")
     repo = RUN_URL_RE.fullmatch(run_url).group(1) if run_url else None
     commit_text = f"`{commit[:7]}`"
     if repo:
-        commit_text = f"[{commit_text}](https://github.com/{repo}/commit/{commit})"
+        commit_text = f"[{commit_text}]({_url(f'https://github.com/{repo}/commit/{commit}')})"
     out.append(f"- **Commit:** {commit_text} on `{ref}`")
     out.append(f"- **Date:** {start}")
     out.append("")
