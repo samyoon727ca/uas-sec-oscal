@@ -3,3 +3,6 @@ data/upstream/** -text
 
 # Shell scripts must keep LF line endings to run under bash.
 *.sh text eol=lf
+
+# Generated OSCAL is written with LF; keep the checkout byte-identical to generator output.
+oscal/generated/** text eol=lf

@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 from uas_oscal import __version__
+from uas_oscal.component import DEFAULT_TRACE, generate
+from uas_oscal.mapping import DEFAULT_MAPPING, DEFAULT_REQUIREMENTS, MappingError
 
 SUBCOMMANDS = {
     "component": "Emit an OSCAL component definition from the P1 requirements and trace.",
@@ -19,6 +22,30 @@ def _not_implemented(args: argparse.Namespace) -> int:
     return 1
 
 
+def _component(args: argparse.Namespace) -> int:
+    try:
+        text = generate(args.requirements, args.trace, args.mapping, args.last_modified)
+    except (MappingError, ValueError, OSError) as exc:
+        print(f"uas-oscal component: {exc}", file=sys.stderr)
+        return 1
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with args.output.open("w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
+    return 0
+
+
+def _add_component_args(cmd: argparse.ArgumentParser) -> None:
+    cmd.add_argument("--requirements", type=Path, default=DEFAULT_REQUIREMENTS, help="P1 requirements.csv")
+    cmd.add_argument("--trace", type=Path, default=DEFAULT_TRACE, help="P1 trace.csv (threat_id,req_id)")
+    cmd.add_argument("--mapping", type=Path, default=DEFAULT_MAPPING, help="control mapping YAML")
+    cmd.add_argument("-o", "--output", type=Path, required=True, help="output JSON file")
+    cmd.add_argument(
+        "--last-modified",
+        help="metadata last-modified as ISO 8601 with a UTC offset "
+        "(default: date of the latest git commit that touched an input file)",
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="uas-oscal",
@@ -28,7 +55,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", metavar="COMMAND", required=True)
     for name, help_text in SUBCOMMANDS.items():
         cmd = sub.add_parser(name, help=help_text, description=help_text)
-        cmd.set_defaults(func=_not_implemented)
+        if name == "component":
+            _add_component_args(cmd)
+            cmd.set_defaults(func=_component)
+        else:
+            cmd.set_defaults(func=_not_implemented)
     return parser
 
 

@@ -36,3 +36,6 @@ jobs:
 
       - name: Validate hand-written OSCAL
         run: bash scripts/validate.sh oscal/handwritten/*.json
+
+      - name: Validate generated OSCAL
+        run: bash scripts/validate.sh oscal/generated/component-definition.json
