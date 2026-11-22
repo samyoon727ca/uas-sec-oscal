@@ -187,6 +187,15 @@ def test_absolute_evidence_url_is_encoded(tmp_path):
     )
 
 
+def test_entity_references_in_evidence_url_stay_literal(tmp_path):
+    results = tmp_path / "oscal" / "results.json"
+    link = _evidence_link("https://example.com/x?a=1&amp;b=&#42;", results, tmp_path / "out.md")
+    assert link == (
+        r"[https://example.com/x?a=1\&amp;b=\&\#42;]"
+        r"(https://example.com/x?a=1\&amp;b=\&#42;)"
+    )
+
+
 def test_run_url_is_encoded(tmp_path):
     results = tmp_path / "oscal" / "results.json"
     link = _evidence_link("https://github.com/o/r(x)/actions/runs/1", results, tmp_path / "out.md")
@@ -205,7 +214,7 @@ def test_input_values_are_escaped_everywhere(tmp_path):
         set_result_prop(result, "ci-run-attempt", "[a]")
         set_result_prop(result, "git-ref", "feat/`x`*y*[z]<b>|")
         set_result_prop(result, "git-commit", "ab``cdef")
-        result["start"] = "2026 <b>*now*</b>"
+        result["start"] = "2026 <b>*now*</b> &lt;u&gt;"
         for obs in result["observations"]:
             obs["relevant-evidence"] = [ev for ev in obs["relevant-evidence"] if "://" not in ev["href"]]
 
@@ -215,7 +224,7 @@ def test_input_values_are_escaped_everywhere(tmp_path):
     assert lines[0] == r"# VE-\#7 \*x\* \<i\> assessment results"
     assert r"- **Run:** `` `wf` `` run 1\_2, attempt \[a\]" in lines
     assert r"- **Commit:** ```ab``cde``` on ``feat/`x`*y*[z]<b>|``" in lines
-    assert r"- **Date:** 2026 \<b\>\*now\*\</b\>" in lines
+    assert r"- **Date:** 2026 \<b\>\*now\*\</b\> \&lt;u\&gt;" in lines
     assert r"## Mapped requirements not assessed by VE-\#7 \*x\* \<i\>" in lines
     assert r"from the VE-\#7 \*x\* \<i\> CI evidence" in text
     # Raw HTML and emphasis survive only inside the ref's code span.
@@ -233,6 +242,7 @@ def test_input_values_are_escaped_everywhere(tmp_path):
         ("3) x", r"3\) x"),
         ("a\n\n  b\tc", "a b c"),
         ("x|y\\z~$!", r"x\|y\\z\~\$\!"),
+        ("&lt;b&gt; &#42; &amp;", r"\&lt;b\&gt; \&\#42; \&amp;"),
         ("SR-005", "SR-005"),
     ],
 )

@@ -93,7 +93,7 @@ def _prop(obj: dict[str, Any], name: str, where: str) -> str:
     return values[0]
 
 
-INLINE_SPECIALS = re.compile(r"([\\`*_\[\]<>#|!~$])")
+INLINE_SPECIALS = re.compile(r"([\\`*_\[\]<>#|!~$&])")
 LEADING_LIST_MARKER = re.compile(r"^([-+])|^(\d+)([.)])")
 
 
@@ -101,8 +101,9 @@ def _inline(text: str) -> str:
     """Escape text so it renders literally inline, including in table cells and link text.
 
     Whitespace runs (including newlines) collapse to one space, Markdown and HTML
-    metacharacters (and ``|`` for tables) are backslash-escaped, and a leading list
-    marker is escaped so the text cannot start a nested list.
+    metacharacters (and ``|`` for tables) are backslash-escaped, ``&`` is escaped so
+    entity and character references such as ``&lt;`` or ``&#42;`` stay literal, and a
+    leading list marker is escaped so the text cannot start a nested list.
     """
     text = INLINE_SPECIALS.sub(r"\\\1", " ".join(text.split()))
     return LEADING_LIST_MARKER.sub(lambda m: f"\\{m[1]}" if m[1] else f"{m[2]}\\{m[3]}", text)
@@ -125,9 +126,11 @@ def _url(href: str) -> str:
 
     Spaces, parentheses, angle brackets, square brackets, pipes and other characters
     that would end or break the link (or the table cell) are encoded; existing
-    ``%XX`` escapes and URL delimiters are kept.
+    ``%XX`` escapes and URL delimiters are kept. ``&`` stays a query delimiter but is
+    backslash-escaped, because Markdown decodes entity references such as ``&amp;`` in
+    link destinations.
     """
-    return quote(href, safe="/:?#@!$&'*+,;=%~")
+    return quote(href, safe="/:?#@!$&'*+,;=%~").replace("&", "\\&")
 
 
 def _load(path: Path, root: str) -> dict[str, Any]:
