@@ -25,6 +25,7 @@ import posixpath
 import re
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from uas_oscal.component import UAS_NS
 from uas_oscal.mapping import REPO_ROOT
@@ -55,7 +56,14 @@ def _get(obj: Any, *keys: str | int) -> Any:
 
 
 def _props(obj: dict[str, Any], name: str) -> list[str]:
-    return [p["value"] for p in obj.get("props", []) if p.get("ns") == UAS_NS and p.get("name") == name]
+    values = []
+    for p in obj.get("props", []):
+        if p.get("ns") == UAS_NS and p.get("name") == name:
+            value = p.get("value")
+            if not isinstance(value, str):
+                raise RenderError(f"`{name}` prop has no string value")
+            values.append(value)
+    return values
 
 
 def _prop(obj: dict[str, Any], name: str, where: str) -> str:
@@ -68,6 +76,11 @@ def _prop(obj: dict[str, Any], name: str, where: str) -> str:
 def _cell(text: str) -> str:
     """Escape text for a Markdown table cell."""
     return text.replace("\\", "\\\\").replace("|", "\\|").replace("\n", " ")
+
+
+def _link_text(text: str) -> str:
+    """Escape text for Markdown link text inside a table cell."""
+    return _cell(text).replace("[", "\\[").replace("]", "\\]")
 
 
 def _load(path: Path, root: str) -> dict[str, Any]:
@@ -94,9 +107,9 @@ def _evidence_link(href: str, results_path: Path, output: Path) -> str:
     if match:
         return f"[CI run {match.group(2)}]({href})"
     if "://" in href:
-        return f"[{_cell(href)}]({href})"
+        return f"[{_link_text(href)}]({href})"
     target = results_path.parent / href
-    return f"[{posixpath.basename(href)}]({_link(target, output)})"
+    return f"[{_link_text(posixpath.basename(href))}]({quote(_link(target, output))})"
 
 
 def _is_draft(title: str) -> bool:

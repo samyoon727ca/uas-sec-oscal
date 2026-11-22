@@ -75,7 +75,8 @@ The output is deterministic. `last-modified` is the run's `date_utc`, and the hr
 ## Rendering the results page
 
 ```sh
-uas-oscal render --results oscal/generated/ve07-assessment-results.json   --component oscal/generated/component-definition.json -o docs/results/ve07.md
+uas-oscal render --results oscal/generated/ve07-assessment-results.json \
+  --component oscal/generated/component-definition.json -o docs/results/ve07.md
 ```
 
 These are the defaults, so `uas-oscal render` alone does the same. The page has a header with the CI run, the commit it tested and the run date; a table of requirement, control, finding status, mapping status and evidence links; the test-case outcomes; the mapped requirements this run does not assess; and a short "how this was produced" section. A DRAFT banner appears when any mapping row in either document is not `approved` or either document's title ends in `(DRAFT)`. Links are relative to the output file. `tests/test_render.py` fails if the committed page is out of date.

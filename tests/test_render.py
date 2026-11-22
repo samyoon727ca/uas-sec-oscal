@@ -7,7 +7,7 @@ import pytest
 
 from uas_oscal.cli import main
 from uas_oscal.component import UAS_NS
-from uas_oscal.render import DEFAULT_COMPONENT, DEFAULT_OUTPUT, DEFAULT_RESULTS, generate
+from uas_oscal.render import DEFAULT_COMPONENT, DEFAULT_OUTPUT, DEFAULT_RESULTS, _evidence_link, generate
 
 ROOT = Path(__file__).resolve().parent.parent
 SUMMARY = ROOT / "data" / "upstream" / "evidence" / "ve07-ci" / "20261013-0d3ca38" / "summary.json"
@@ -156,6 +156,13 @@ def test_table_cells_are_escaped(tmp_path):
     assert "| TC-01 | a\\|b |" in generate(ar, cd, tmp_path / "out.md")
 
 
+
+def test_evidence_link_text_is_escaped(tmp_path):
+    results = tmp_path / "oscal" / "results.json"
+    link = _evidence_link("ev/a|b]c.json", results, tmp_path / "out.md")
+    assert link == r"[a\|b\]c.json](oscal/ev/a%7Cb%5Dc.json)"
+
+
 # Errors
 
 
@@ -186,4 +193,14 @@ def test_bad_results_file_is_a_clean_cli_error(tmp_path, capsys, content, messag
     out = tmp_path / "out.md"
     assert main(["render", "--results", str(bad), "-o", str(out)]) == 1
     assert message in capsys.readouterr().err
+    assert not out.exists()
+
+
+def test_prop_without_value_is_an_error(tmp_path, capsys):
+    ar, cd = _copy(tmp_path, lambda d: d["results"][0]["props"][1].pop("value"))
+    out = tmp_path / "out.md"
+    assert main(["render", "--results", str(ar), "--component", str(cd), "-o", str(out)]) == 1
+    err = capsys.readouterr().err
+    assert err.startswith("uas-oscal render: ")
+    assert "`ci-run-id` prop has no string value" in err
     assert not out.exists()
