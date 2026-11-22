@@ -1,10 +1,13 @@
 """The `uas-oscal render` Markdown page (src/uas_oscal/render.py)."""
 
 import json
+from functools import reduce
+from operator import getitem
 from pathlib import Path
 
 import pytest
 
+import uas_oscal.render as render
 from uas_oscal.cli import main
 from uas_oscal.component import UAS_NS
 from uas_oscal.render import (
@@ -131,7 +134,7 @@ def test_banner_when_only_the_title_is_draft(tmp_path):
 
     ar, cd = _copy(tmp_path, lambda d: _approve_all(ar=d), change_cd)
     text = generate(ar, cd, tmp_path / "out.md")
-    assert "> **DRAFT.** The control mapping has no `approved_by` set." in text
+    assert "> **DRAFT.** The source OSCAL document title is marked `(DRAFT)`." in text
 
 
 # Findings
@@ -290,7 +293,11 @@ def test_duplicate_implemented_requirement_is_an_error(tmp_path):
     ("content", "message"),
     [
         ("{", "invalid JSON"),
+        pytest.param(
+            '{"assessment-results": ' + "[" * 100_000 + "]" * 100_000 + "}", "invalid JSON", id="too-deeply-nested"
+        ),
         ('{"catalog": {}}', "not an OSCAL assessment-results document"),
+        ('{"assessment-results": []}', "not an OSCAL assessment-results document"),
     ],
 )
 def test_bad_results_file_is_a_clean_cli_error(tmp_path, capsys, content, message):
@@ -310,3 +317,80 @@ def test_prop_without_value_is_an_error(tmp_path, capsys):
     assert err.startswith("uas-oscal render: ")
     assert "`ci-run-id` prop has no string value" in err
     assert not out.exists()
+
+
+def _drop_observation_uuid(ar):
+    del ar["results"][0]["observations"][0]["uuid"]
+
+
+def _duplicate_observation(ar):
+    observations = ar["results"][0]["observations"]
+    observations.append(json.loads(json.dumps(observations[0])))
+
+
+@pytest.mark.parametrize(
+    ("change_ar", "change_cd", "message"),
+    [
+        (None, lambda d: d.update(components=[1]), "every entry in components must be an object"),
+        (lambda d: d["results"][0]["observations"].append("x"), None,
+         "every entry in observations must be an object"),
+        (lambda d: d["results"][0]["findings"].insert(0, 1), None, "every entry in findings must be an object"),
+        (lambda d: d.update(results={"x": 1}), None, "results is not a list"),
+        (lambda d: d["results"][0].update(props={}), None, "props is not a list"),
+        (lambda d: d["results"][0]["findings"][0].update(target="x"), None, "target is not an object"),
+        (lambda d: d["results"][0].update(start=20261013), None, "start is not a string"),
+        (None, lambda d: d["metadata"].update(title=None), "metadata.title is not a string"),
+        (_drop_observation_uuid, None, "missing uuid"),
+        (_duplicate_observation, None, "duplicate uuid"),
+        # A JSON "\ud800" escape loads as a lone surrogate, which cannot be written as UTF-8.
+        (lambda d: d["results"][0].update(start=chr(0xD800)), None, "surrogates not allowed"),
+    ],
+)
+def test_malformed_input_is_a_clean_cli_error(tmp_path, capsys, change_ar, change_cd, message):
+    ar, cd = _copy(tmp_path, change_ar, change_cd)
+    out = tmp_path / "out.md"
+    assert main(["render", "--results", str(ar), "--component", str(cd), "-o", str(out)]) == 1
+    err = capsys.readouterr().err
+    assert err.startswith("uas-oscal render: ")
+    assert message in err
+    assert not out.exists()
+
+
+def _paths(node, path=()):
+    """Yield the path to every value below ``node`` in a JSON document."""
+    children = node.items() if isinstance(node, dict) else enumerate(node) if isinstance(node, list) else ()
+    for key, child in children:
+        yield (*path, key)
+        yield from _paths(child, (*path, key))
+
+
+DELETE = object()
+
+
+@pytest.mark.parametrize("root", ["assessment-results", "component-definition"])
+def test_any_malformed_value_renders_or_is_a_render_error(monkeypatch, root):
+    """Deleting any value in either input, or swapping in another JSON type, never crashes the render."""
+    texts = {
+        "assessment-results": DEFAULT_RESULTS.read_text(encoding="utf-8"),
+        "component-definition": DEFAULT_COMPONENT.read_text(encoding="utf-8"),
+    }
+    docs = {}
+    monkeypatch.setattr(render, "_load", lambda path, r: docs[r])
+    crashes = []
+    for path in list(_paths(json.loads(texts[root])[root])):
+        for value in (DELETE, None, 0, "x", ["x"], {"x": "x"}):
+            docs.update({r: json.loads(text)[r] for r, text in texts.items()})
+            *parents, key = path
+            parent = reduce(getitem, parents, docs[root])
+            if value is DELETE:
+                del parent[key]
+            else:
+                parent[key] = value
+            try:
+                generate(DEFAULT_RESULTS, DEFAULT_COMPONENT, DEFAULT_OUTPUT)
+            except RenderError:
+                pass
+            except Exception as exc:  # collect every crash, then fail once with all of them
+                shown = "<deleted>" if value is DELETE else repr(value)
+                crashes.append(f"{'/'.join(map(str, path))} = {shown}: {exc!r}")
+    assert not crashes, "\n".join(crashes)

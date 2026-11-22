@@ -44,20 +44,40 @@ class RenderError(ValueError):
     """An input document is missing something the page needs."""
 
 
-def _get(obj: Any, *keys: str | int) -> Any:
-    where = ""
+KIND_NAMES = {str: "a string", list: "a list", dict: "an object"}
+
+
+# Every read from an input document goes through _get or _objects, which check the
+# shape and type of what they return, so malformed input raises RenderError rather
+# than a TypeError or AttributeError further down.
+def _get(obj: dict[str, Any], *keys: str, kind: type = str) -> Any:
+    """Return ``obj[keys[0]][keys[1]]...``, which must be a ``kind``."""
+    path: list[str] = []
     for key in keys:
-        try:
-            obj = obj[key]
-        except (KeyError, IndexError, TypeError):
-            raise RenderError(f"missing {where}{key}" if where else f"missing {key}") from None
-        where += f"{key}."
+        if not isinstance(obj, dict):
+            raise RenderError(f"{'.'.join(path) or 'document'} is not an object")
+        path.append(key)
+        if key not in obj:
+            raise RenderError(f"missing {'.'.join(path)}")
+        obj = obj[key]
+    if not isinstance(obj, kind):
+        raise RenderError(f"{'.'.join(path)} is not {KIND_NAMES[kind]}")
     return obj
+
+
+def _objects(obj: dict[str, Any], key: str, *, required: bool = True) -> list[dict[str, Any]]:
+    """Return ``obj[key]``, which must be a list of objects; ``[]`` if absent and optional."""
+    if not required and key not in obj:
+        return []
+    items = _get(obj, key, kind=list)
+    if not all(isinstance(item, dict) for item in items):
+        raise RenderError(f"every entry in {key} must be an object")
+    return items
 
 
 def _props(obj: dict[str, Any], name: str) -> list[str]:
     values = []
-    for p in obj.get("props", []):
+    for p in _objects(obj, "props", required=False):
         if p.get("ns") == UAS_NS and p.get("name") == name:
             value = p.get("value")
             if not isinstance(value, str):
@@ -113,9 +133,9 @@ def _url(href: str) -> str:
 def _load(path: Path, root: str) -> dict[str, Any]:
     try:
         doc = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
+    except (json.JSONDecodeError, RecursionError) as exc:
         raise RenderError(f"{path}: invalid JSON: {exc}") from exc
-    if not isinstance(doc, dict) or root not in doc:
+    if not isinstance(doc, dict) or not isinstance(doc.get(root), dict):
         raise RenderError(f"{path}: not an OSCAL {root} document")
     return doc[root]
 
@@ -151,7 +171,7 @@ def build_markdown(results_path: Path, component_path: Path, output: Path) -> st
 
     ar_title = _get(ar, "metadata", "title")
     cd_title = _get(cd, "metadata", "title")
-    results = _get(ar, "results")
+    results = _objects(ar, "results")
     if len(results) != 1:
         raise RenderError(f"{results_path}: expected one result, found {len(results)}")
     result = results[0]
@@ -164,22 +184,30 @@ def build_markdown(results_path: Path, component_path: Path, output: Path) -> st
     commit = _prop(result, "git-commit", "result")
     start = _get(result, "start")
 
-    observations = {_get(o, "uuid"): o for o in _get(result, "observations")}
+    # observation uuid -> observation, and observation uuid -> its evidence hrefs
+    observations: dict[str, dict[str, Any]] = {}
+    obs_hrefs: dict[str, list[str]] = {}
+    for o in _objects(result, "observations"):
+        uuid = _get(o, "uuid")
+        if uuid in observations:
+            raise RenderError(f"observation {uuid}: duplicate uuid")
+        observations[uuid] = o
+        obs_hrefs[uuid] = [_get(ev, "href") for ev in _objects(o, "relevant-evidence", required=False)]
     run_url = next(
         (
-            ev["href"]
-            for o in observations.values()
-            for ev in o.get("relevant-evidence", [])
-            if (m := RUN_URL_RE.fullmatch(ev.get("href", ""))) and m.group(2) == run_id
+            href
+            for hrefs in obs_hrefs.values()
+            for href in hrefs
+            if (m := RUN_URL_RE.fullmatch(href)) and m.group(2) == run_id
         ),
         None,
     )
 
     # (requirement, control) -> mapping status, in component-definition order.
     implemented: dict[tuple[str, str], str] = {}
-    for component in _get(cd, "components"):
-        for ci in component.get("control-implementations", []):
-            for ir in _get(ci, "implemented-requirements"):
+    for component in _objects(cd, "components"):
+        for ci in _objects(component, "control-implementations", required=False):
+            for ir in _objects(ci, "implemented-requirements"):
                 where = f"implemented requirement {ir.get('uuid', '?')}"
                 key = (_prop(ir, "requirement-id", where), _get(ir, "control-id"))
                 if key in implemented:
@@ -188,7 +216,7 @@ def build_markdown(results_path: Path, component_path: Path, output: Path) -> st
 
     # (requirement, control) -> finding
     findings: dict[tuple[str, str], dict[str, Any]] = {}
-    for finding in _get(result, "findings"):
+    for finding in _objects(result, "findings"):
         where = f"finding {finding.get('uuid', '?')}"
         target_id = _get(finding, "target", "target-id")
         match = OBJECTIVE_RE.fullmatch(target_id)
@@ -222,7 +250,7 @@ def build_markdown(results_path: Path, component_path: Path, output: Path) -> st
                 "(`mapping-status` is not `approved`)."
             )
         else:
-            reason = "The control mapping has no `approved_by` set."
+            reason = "The source OSCAL document title is marked `(DRAFT)`."
         out.append("> [!WARNING]")
         out.append(
             f"> **DRAFT.** {reason} The requirement-to-control links below are proposals, "
@@ -256,11 +284,11 @@ def build_markdown(results_path: Path, component_path: Path, output: Path) -> st
                 state = _get(finding, "target", "status", "state")
                 state = STATE_LABELS.get(state, state)
                 hrefs: list[str] = []
-                for rel in finding.get("related-observations", []):
-                    obs = observations.get(_get(rel, "observation-uuid"))
-                    if obs is None:
+                for rel in _objects(finding, "related-observations", required=False):
+                    uuid = _get(rel, "observation-uuid")
+                    if uuid not in obs_hrefs:
                         raise RenderError(f"finding {finding.get('uuid', '?')}: unknown observation")
-                    hrefs += [_get(ev, "href") for ev in obs.get("relevant-evidence", [])]
+                    hrefs += obs_hrefs[uuid]
                 evidence = [_evidence_link(h, results_path, output) for h in dict.fromkeys(hrefs)]
             out.append(
                 f"| {_inline(req)} | {_inline(control_title(control))} | {_inline(state)} "
@@ -272,8 +300,8 @@ def build_markdown(results_path: Path, component_path: Path, output: Path) -> st
     out.append("")
     out.append("| Test case | Outcome |")
     out.append("|---|---|")
-    for obs in observations.values():
-        where = f"observation {obs['uuid']}"
+    for uuid, obs in observations.items():
+        where = f"observation {uuid}"
         out.append(f"| {_inline(_prop(obs, 'test-case', where))} | {_inline(_prop(obs, 'test-outcome', where))} |")
     out.append("")
 

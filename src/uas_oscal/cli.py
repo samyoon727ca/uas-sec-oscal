@@ -47,13 +47,14 @@ def _results(args: argparse.Namespace) -> int:
 
 def _render(args: argparse.Namespace) -> int:
     try:
-        text = generate_render(args.results, args.component, args.output)
+        # Encode inside the try: input text UTF-8 cannot encode (a lone surrogate from a
+        # JSON "\ud800" escape) is then a clean error, not a traceback and a half-written file.
+        data = generate_render(args.results, args.component, args.output).encode("utf-8")
     except (ValueError, OSError) as exc:
         print(f"uas-oscal render: {exc}", file=sys.stderr)
         return 1
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    with args.output.open("w", encoding="utf-8", newline="\n") as f:
-        f.write(text)
+    args.output.write_bytes(data)
     return 0
 
 
