@@ -15,7 +15,7 @@ def test_help_lists_subcommands(capsys):
         assert name in out
 
 
-@pytest.mark.parametrize("name", sorted(set(SUBCOMMANDS) - {"component"}))
+@pytest.mark.parametrize("name", sorted(set(SUBCOMMANDS) - {"component", "results"}))
 def test_stub_subcommands_exit_not_implemented(name, capsys):
     assert main([name]) == 1
     assert "not implemented" in capsys.readouterr().err

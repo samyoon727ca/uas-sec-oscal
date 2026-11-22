@@ -1,7 +1,7 @@
 # uas-sec-oscal
 OSCAL continuous-ATO evidence from UAS CI runs (pilot: P2 VE-07 / SR-005)
 
-The `uas_oscal` Python package reads P1 requirements and trace data and a P2 evidence summary, and generates OSCAL from them. NIST oscal-cli validates the output. `uas-oscal component` generates the component definition; the `results` and `render` subcommands are still stubs.
+The `uas_oscal` Python package reads P1 requirements and trace data and a P2 evidence summary, and generates OSCAL from them. NIST oscal-cli validates the output. `uas-oscal component` generates the component definition and `uas-oscal results` generates VE-07 assessment results; the `render` subcommand is still a stub.
 
 ## Pins
 
@@ -16,12 +16,13 @@ The `uas_oscal` Python package reads P1 requirements and trace data and a P2 evi
 
 ```
 src/uas_oscal/            Python package; `uas-oscal` console entry point in cli.py
-tests/                    pytest suite
+tests/                    pytest suite; tests/fixtures/ holds a failing VE-07 summary.json for tests
 scripts/
   install-oscal-cli.sh    install the pinned oscal-cli into .tools/ (gitignored)
   validate.sh             run `oscal-cli <model> validate` on OSCAL files
 oscal/handwritten/        hand-written OSCAL: golden VE-07 assessment results and a stub assessment plan
-oscal/generated/          generator output, committed: component-definition.json from `uas-oscal component`
+oscal/generated/          generator output, committed: component-definition.json from `uas-oscal component`,
+                          ve07-assessment-results.json from `uas-oscal results`
 docs/ve07-walkthrough.md  what the VE-07 results assert; summary.json -> OSCAL field mapping and UUID scheme
 data/upstream/            vendored inputs from uas-sec-p2-verified-boot; do not edit
   PROVENANCE.md           source repo, commit and original paths
@@ -29,7 +30,7 @@ data/upstream/            vendored inputs from uas-sec-p2-verified-boot; do not 
   p1/requirements.csv     P1 requirements
   p1/trace.csv            P1 threat-to-requirement trace
   evidence/ve07-ci/20261013-0d3ca38/summary.json   P2 VE-07 CI evidence summary
-.github/workflows/ci.yml  tests, then installs oscal-cli and validates oscal/handwritten/*.json and oscal/generated/component-definition.json
+.github/workflows/ci.yml  tests, then installs oscal-cli and validates oscal/handwritten/*.json and both generated files
 ```
 
 ## Running tests
@@ -55,6 +56,16 @@ The output has one component, the UAS P2 verified-boot subsystem, with a control
 The output has no verification-event (VE) links yet. Issue #4 asked for verification events taken from `trace.csv`, but `trace.csv` has only `threat_id,req_id`. So each implemented requirement carries its threat links plus the P1 verification method and evidence repo, but no VE IDs. VE-to-requirement links are in P1's verification table. P2 vendors that table at `data/p1/verification.csv`, in the same P1 snapshot pinned in P2's `data/p1/pin.txt`; for example, `VE-07` maps to `SR-005; SR-010`. Adding VE links (for example a `verification-event` prop) is a follow-up that vendors that file.
 
 The output is deterministic. UUIDs are uuid5 values in the project namespace (see [docs/ve07-walkthrough.md](docs/ve07-walkthrough.md#deterministic-uuids)), with names `component-definition/uas-p2-verified-boot`, `component/uas-p2-verified-boot`, `control-implementation/uas-p2-verified-boot/nist-sp-800-53-rev5` and `implemented-requirement/uas-p2-verified-boot/<SR>/<control>`. Keys are sorted. `metadata.last-modified` is `--last-modified` if given, otherwise the committer date (UTC) of the latest git commit that touched an input file. The inputs may sit in different git repositories; each repository is checked for its own inputs. That default needs every input in a git work tree, full git history and committed inputs: for an input outside git, in a shallow clone (such as `actions/checkout` with its default `fetch-depth: 1`), or when an input file has uncommitted changes, the command fails and asks for `--last-modified`. After you change an input, commit it, rerun the command and commit the new output; `tests/test_component.py` fails if the committed file is out of date.
+
+## Generating the VE-07 assessment results
+
+```sh
+uas-oscal results --summary data/upstream/evidence/ve07-ci/20261013-0d3ca38/summary.json   --mapping mappings/controls.yaml --ve VE-07 -o oscal/generated/ve07-assessment-results.json
+```
+
+The generator follows the field mapping and UUID scheme in [docs/ve07-walkthrough.md](docs/ve07-walkthrough.md), and `oscal/handwritten/ve07-assessment-results.json` is its golden reference. It emits one result for the CI run and one observation per test case. It also emits one finding for each control that `mappings/controls.yaml` maps to the requirement VE-07 verifies (SR-005), so `si-7`, `si-7.9` and `si-7.15`. A finding is `satisfied` only when `passed` is `true` and every test case is `passed`. Otherwise it is `not-satisfied`. Findings carry the same draft marking as the component definition: a `mapping-status` prop, a DRAFT paragraph for unapproved rows, and a `(DRAFT)` title until the SR-005 row is approved and `approved_by` is set. A `summary.json` with a missing or unknown field is rejected with an error that names the field. Only VE-07 is supported.
+
+The output is deterministic. `last-modified` is the run's `date_utc`, and the hrefs to `summary.json` and to the assessment-plan stub are relative to the output file. `tests/test_results.py` fails if the committed file is out of date. It also checks the file against the golden file and lists the intentional differences in `INTENTIONAL_DIFFERENCES`.
 
 ## Validating OSCAL locally
 

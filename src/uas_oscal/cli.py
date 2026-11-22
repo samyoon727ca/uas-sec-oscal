@@ -9,6 +9,8 @@ from pathlib import Path
 from uas_oscal import __version__
 from uas_oscal.component import DEFAULT_TRACE, generate
 from uas_oscal.mapping import DEFAULT_MAPPING, DEFAULT_REQUIREMENTS, MappingError
+from uas_oscal.results import VERIFICATION_EVENTS
+from uas_oscal.results import generate as generate_results
 
 SUBCOMMANDS = {
     "component": "Emit an OSCAL component definition from the P1 requirements and trace.",
@@ -32,6 +34,26 @@ def _component(args: argparse.Namespace) -> int:
     with args.output.open("w", encoding="utf-8", newline="\n") as f:
         f.write(text)
     return 0
+
+
+def _results(args: argparse.Namespace) -> int:
+    try:
+        text = generate_results(args.summary, args.output, args.ve, args.mapping, args.requirements)
+    except (MappingError, ValueError, OSError) as exc:
+        print(f"uas-oscal results: {exc}", file=sys.stderr)
+        return 1
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with args.output.open("w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
+    return 0
+
+
+def _add_results_args(cmd: argparse.ArgumentParser) -> None:
+    cmd.add_argument("--summary", type=Path, required=True, help="P2 evidence summary.json")
+    cmd.add_argument("--mapping", type=Path, default=DEFAULT_MAPPING, help="control mapping YAML")
+    cmd.add_argument("--requirements", type=Path, default=DEFAULT_REQUIREMENTS, help="P1 requirements.csv")
+    cmd.add_argument("--ve", required=True, choices=sorted(VERIFICATION_EVENTS), help="verification event")
+    cmd.add_argument("-o", "--output", type=Path, required=True, help="output JSON file")
 
 
 def _add_component_args(cmd: argparse.ArgumentParser) -> None:
@@ -58,6 +80,9 @@ def build_parser() -> argparse.ArgumentParser:
         if name == "component":
             _add_component_args(cmd)
             cmd.set_defaults(func=_component)
+        elif name == "results":
+            _add_results_args(cmd)
+            cmd.set_defaults(func=_results)
         else:
             cmd.set_defaults(func=_not_implemented)
     return parser

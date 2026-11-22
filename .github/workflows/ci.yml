@@ -38,4 +38,4 @@ jobs:
         run: bash scripts/validate.sh oscal/handwritten/*.json
 
       - name: Validate generated OSCAL
-        run: bash scripts/validate.sh oscal/generated/component-definition.json
+        run: bash scripts/validate.sh oscal/generated/component-definition.json oscal/generated/ve07-assessment-results.json

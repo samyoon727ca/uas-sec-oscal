@@ -1,6 +1,6 @@
 # VE-07 assessment results: walkthrough
 
-`oscal/handwritten/ve07-assessment-results.json` is a hand-written OSCAL 1.1.2 assessment-results document for one P2 CI run: the VE-07 evidence summary in `data/upstream/evidence/ve07-ci/20261013-0d3ca38/summary.json`. It is the golden reference for the `uas-oscal results` generator. The generator must reproduce the file from `summary.json`, and this page is its spec.
+`oscal/handwritten/ve07-assessment-results.json` is a hand-written OSCAL 1.1.2 assessment-results document for one P2 CI run: the VE-07 evidence summary in `data/upstream/evidence/ve07-ci/20261013-0d3ca38/summary.json`. It is the golden reference for the `uas-oscal results` generator. The generator must reproduce the file from `summary.json`, and this page is its spec. Its output, `oscal/generated/ve07-assessment-results.json`, differs from the golden file only in the ways listed in `INTENTIONAL_DIFFERENCES` in `tests/test_results.py`. For example, it has a finding for every control that `mappings/controls.yaml` maps to SR-005, and it carries draft marking while the mapping is unapproved.
 
 `oscal/handwritten/ve07-assessment-plan.json` is a minimal assessment-plan stub. The results document's `import-ap` points to it, so the href resolves to a real file. oscal-cli 1.0.3 does not follow `import-ap` when it validates, so the stub is not needed for validation itself. The project has no system security plan yet, so the stub's `import-ssp` points to a back-matter resource that says so and links to the P1 requirements.
 
@@ -36,8 +36,8 @@ Paths on the left are JSON paths in `summary.json`. Paths on the right are relat
 | `date_utc` | `result.start`; `obs.collected`; `metadata.last-modified` (results and plan stub) | `summary.json` has only one timestamp, so `result.end` is left out. `last-modified` uses the run time rather than the editing time so that the output is deterministic. |
 | `passed` | `finding.target.status.state` (with `test_cases`); `finding.description` | See [Finding status](#finding-status). |
 | `test_cases` (keys) | one `obs` per key, in file order; `obs.props[test-case]` *(uas)*; `obs.title`; `finding.description` | |
-| `test_cases.<TC>` (values) | `obs.props[test-outcome]` *(uas)*; `obs.title`; `obs.description`; `finding.target.status.state` | |
-| `runs[]` where `tc` is `<TC>` | one bullet per run in that test case's `obs.description`: `- <id> (<role>): <title>. ok: <ok>` | If `control_for` is set, `<role>` is written as `control for <control_for>`. |
+| `test_cases.<TC>` (values) | `obs.props[test-outcome]` *(uas)*; `obs.title`; `obs.description`; `finding.target.status.state` | One of `passed`, `failed`, `skipped` or `error`; any other value is an error. A test case recorded as `passed` must have `ok: true` on all its runs, control runs included, or the summary is rejected. |
+| `runs[]` where `tc` is `<TC>` | one bullet per run in that test case's `obs.description`: `- <id> (<role>): <title>. ok: <ok>` | If `control_for` is set, `<role>` is written as `control for <control_for>`. Run `id`s must be unique; a repeated `id` is an error. |
 
 Values that do not come from `summary.json`:
 
