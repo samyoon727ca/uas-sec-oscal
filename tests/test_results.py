@@ -232,7 +232,7 @@ def test_passed_test_case_with_a_failed_control_run_is_rejected():
     summary, _ = load_summary(DEFAULT_SUMMARY)
     (control,) = [run for run in summary["runs"] if run["id"] == "TC-04e-control"]
     control["ok"] = False
-    with pytest.raises(SummaryError, match="test_cases.TC-04 is 'passed', but its run\(s\) TC-04e-control"):
+    with pytest.raises(SummaryError, match=r"test_cases\.TC-04 is 'passed', but its run\(s\) TC-04e-control"):
         validate_summary(summary)
     summary["test_cases"]["TC-04"] = "failed"
     validate_summary(summary)
@@ -298,6 +298,10 @@ def _summary_with(change):
         (lambda s: s["environment"].update(run_url="https://example.com/run/1"), "environment.run_url must be"),
         (lambda s: s["environment"].update(run_id="1"), "run_url names run 38345099999, but run_id is 1"),
         (lambda s: s["runs"][0].update(title=""), "runs[0].title must be a non-empty string"),
+        (
+            lambda s: s["runs"].append(dict(s["runs"][0], ok=not s["runs"][0]["ok"])),
+            "duplicate run id TC-01 (also runs[0])",
+        ),
         (lambda s: s.update(event="VE-08"), "summary.json is for VE-08, not VE-07"),
         (lambda s: s["test_cases"].update({"TC-03": "PASS"}), "test_cases.TC-03: unknown outcome 'PASS'"),
         (lambda s: s["test_cases"].update({"TC-03": "Passed"}), "test_cases.TC-03: unknown outcome 'Passed'"),

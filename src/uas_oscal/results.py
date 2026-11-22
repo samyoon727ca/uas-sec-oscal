@@ -170,6 +170,7 @@ def validate_summary(summary: Any) -> None:
     runs = summary["runs"]
     if not isinstance(runs, list):
         raise SummaryError(f"runs must be a list, got {type(runs).__name__}")
+    run_ids: dict[str, int] = {}
     for i, run in enumerate(runs):
         where = f"runs[{i}]"
         _check_keys(run, where, RUN_REQUIRED, RUN_OPTIONAL)
@@ -181,6 +182,9 @@ def validate_summary(summary: Any) -> None:
             raise SummaryError(f"{where}.control_for must be null or a non-empty string, got {control_for!r}")
         if run["tc"] not in test_cases:
             raise SummaryError(f"{where} ({run['id']}): test case {run['tc']} is not in test_cases")
+        if run["id"] in run_ids:
+            raise SummaryError(f"{where}: duplicate run id {run['id']} (also runs[{run_ids[run['id']]}])")
+        run_ids[run["id"]] = i
     for tc, outcome in test_cases.items():
         tc_runs = [run for run in runs if run["tc"] == tc]
         if not tc_runs:
