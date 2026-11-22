@@ -41,6 +41,8 @@ pytest
 uas-oscal --help
 ```
 
+Install the package before running `pytest`: the tests import `uas_oscal` and run `python -m uas_oscal`, so `pytest` in a fresh checkout without the install fails with `ModuleNotFoundError`.
+
 ## Generating the component definition
 
 ```sh
@@ -48,7 +50,7 @@ uas-oscal component --requirements data/upstream/p1/requirements.csv --trace dat
   --mapping mappings/controls.yaml -o oscal/generated/component-definition.json
 ```
 
-The output has one component, the UAS P2 verified-boot subsystem, with a control implementation against the NIST SP 800-53 Rev. 5 catalog. Each (requirement, control) pair in `mappings/controls.yaml` becomes one implemented requirement. Its description holds the requirement statement, the mapping rationale, the threats that `trace.csv` traces to the requirement, and the P1 verification method. Props in the `https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal` namespace carry `requirement-id`, `threat-id` (one per threat) and `mapping-status` (the mapping row's status). Rows that are not `approved` are still emitted, and the document title ends in `(DRAFT)` unless every row is approved.
+The output has one component, the UAS P2 verified-boot subsystem, with a control implementation against the NIST SP 800-53 Rev. 5 catalog. Each (requirement, control) pair in `mappings/controls.yaml` becomes one implemented requirement. Its description holds the requirement statement, the mapping rationale, the threats that `trace.csv` traces to the requirement, and the P1 verification method. Props in the `https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal` namespace carry `requirement-id`, `threat-id` (one per threat) and `mapping-status` (the mapping row's status). Rows that are not `approved` are still emitted, and the document title ends in `(DRAFT)` unless every row is approved and the mapping's `approved_by` is set.
 
 The output has no verification-event (VE) links yet. Issue #4 asked for verification events taken from `trace.csv`, but `trace.csv` has only `threat_id,req_id`. So each implemented requirement carries its threat links plus the P1 verification method and evidence repo, but no VE IDs. VE-to-requirement links are in P1's verification table. P2 vendors that table at `data/p1/verification.csv`, in the same P1 snapshot pinned in P2's `data/p1/pin.txt`; for example, `VE-07` maps to `SR-005; SR-010`. Adding VE links (for example a `verification-event` prop) is a follow-up that vendors that file.
 

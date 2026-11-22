@@ -51,8 +51,9 @@ def _props(obj, name):
     return values
 
 
-def _with_statuses(*statuses):
+def _with_statuses(*statuses, approved_by="owner"):
     mapping = load_mapping()
+    mapping["approved_by"] = approved_by
     rows = mapping["mappings"]
     for row, status in zip(rows, statuses, strict=True):
         row["status"] = status
@@ -216,6 +217,11 @@ REQ_HEADER = "req_id,statement,rationale,allocated_to,verification,evidence_repo
         ("--trace", "threat_id,req_id\nTHR-001,SR-001\nTHR-008,\n", ":3: missing value(s) for req_id"),
         ("--requirements", REQ_HEADER + "SR-005,,r,CMP-CC,T,P2,a\n", ":2: missing value(s) for statement"),
         ("--requirements", REQ_HEADER + "SR-005,s,r,CMP-CC, \t,P2,a\n", ":2: missing value(s) for verification"),
+        (
+            "--requirements",
+            REQ_HEADER + "SR-005,s,r,CMP-CC,T,P2,a\nSR-003,s,r,CMP-FC,T,P2,a\nSR-005,t,r,CMP-CC,T,P2,a\n",
+            ":4: duplicate req_id SR-005 (first on line 2)",
+        ),
     ],
 )
 def test_malformed_csv_is_a_clean_cli_error(tmp_path, capsys, flag, content, message):
@@ -310,6 +316,13 @@ def test_all_approved_is_not_draft():
     for ir in _implemented(cd):
         assert _props(ir, "mapping-status") == ["approved"]
         assert "DRAFT" not in ir["description"]
+
+
+def test_approved_rows_without_approved_by_keep_the_document_draft():
+    cd = _build(_with_statuses(*["approved"] * 5, approved_by=None))
+    assert cd["metadata"]["title"].endswith(" (DRAFT)")
+    for ir in _implemented(cd):
+        assert _props(ir, "mapping-status") == ["approved"]
 
 
 def test_one_unapproved_row_keeps_the_document_draft():

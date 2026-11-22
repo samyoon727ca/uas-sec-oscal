@@ -8,7 +8,8 @@ threats that ``trace.csv`` traces to the requirement.
 
 Rows that are not approved (see ``uas_oscal.mapping.is_approved``) are still
 emitted, but they carry ``mapping-status`` with the row's status, and the document
-title ends in ``(DRAFT)`` unless every row is approved.
+title ends in ``(DRAFT)`` unless every row is approved and the mapping's
+``approved_by`` is set.
 
 The output is deterministic: UUIDs are uuid5 values in the project namespace
 (docs/ve07-walkthrough.md), keys are sorted, and ``last-modified`` comes from the
@@ -58,11 +59,13 @@ def _prop(name: str, value: str) -> dict[str, str]:
     return {"name": name, "ns": UAS_NS, "value": value}
 
 
-def _read_csv(path: Path, columns: tuple[str, ...]) -> list[dict[str, str]]:
-    """Read ``path`` as CSV; raise ``ValueError`` naming the file if a required column or value is missing.
+def _read_csv(path: Path, columns: tuple[str, ...]) -> list[tuple[int, dict[str, str]]]:
+    """Read ``path`` as CSV into (line number, row) pairs.
 
-    A required value is missing if the row is too short to have it or if it is
-    empty or whitespace-only. Values that are present are returned unchanged.
+    The line number is the file line on which the row ends. Raise ``ValueError``
+    naming the file if a required column or value is missing. A required value
+    is missing if the row is too short to have it or if it is empty or
+    whitespace-only. Values that are present are returned unchanged.
     """
     with path.open(encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
@@ -74,18 +77,27 @@ def _read_csv(path: Path, columns: tuple[str, ...]) -> list[dict[str, str]]:
             empty = [c for c in columns if row[c] is None or not row[c].strip()]
             if empty:
                 raise ValueError(f"{path}:{reader.line_num}: missing value(s) for {', '.join(empty)}")
-            rows.append(row)
+            rows.append((reader.line_num, row))
     return rows
 
 
 def load_requirements(path: Path = DEFAULT_REQUIREMENTS) -> dict[str, dict[str, str]]:
-    return {row["req_id"]: row for row in _read_csv(path, REQUIREMENT_COLUMNS)}
+    """Map each requirement ID to its row; raise ``ValueError`` if an ID repeats."""
+    requirements: dict[str, dict[str, str]] = {}
+    first_line: dict[str, int] = {}
+    for line, row in _read_csv(path, REQUIREMENT_COLUMNS):
+        req_id = row["req_id"]
+        if req_id in requirements:
+            raise ValueError(f"{path}:{line}: duplicate req_id {req_id} (first on line {first_line[req_id]})")
+        requirements[req_id] = row
+        first_line[req_id] = line
+    return requirements
 
 
 def load_trace(path: Path = DEFAULT_TRACE) -> dict[str, list[str]]:
     """Map each requirement ID to its sorted, de-duplicated threat IDs."""
     threats: dict[str, set[str]] = {}
-    for row in _read_csv(path, TRACE_COLUMNS):
+    for _, row in _read_csv(path, TRACE_COLUMNS):
         threats.setdefault(row["req_id"], set()).add(row["threat_id"])
     return {req: sorted(ids) for req, ids in threats.items()}
 
@@ -188,7 +200,9 @@ def build_component_definition(
     last_modified: str,
 ) -> dict[str, Any]:
     rows = mapping["mappings"]
-    draft = not all(is_approved(row) for row in rows)
+    # The owner approves the mapping by setting each row's status and approved_by
+    # (mappings/controls.yaml); until both are done the document is a draft.
+    draft = mapping["approved_by"] is None or not all(is_approved(row) for row in rows)
 
     implemented = []
     for row in rows:
