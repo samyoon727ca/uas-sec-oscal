@@ -7,7 +7,8 @@ The document has one result for the CI run, one observation per test case in
 ``test_cases`` (in file order), and one finding per (requirement, control) pair
 that ``mappings/controls.yaml`` maps for the requirements the verification event
 verifies. A finding is ``satisfied`` only when ``passed`` is true and every test
-case is ``passed``; otherwise it is ``not-satisfied``.
+case is ``passed``; otherwise it is ``not-satisfied``. A test case recorded as
+``passed`` must have ``ok: true`` on every one of its runs, test and control alike.
 
 Mapping rows that are not approved (see ``uas_oscal.mapping.is_approved``) are
 marked as in ``uas_oscal.component``: every finding carries ``mapping-status`` (the
@@ -89,6 +90,10 @@ RUN_OPTIONAL = (
     "uboot",
 )
 
+# Outcomes a test case may have in ``test_cases``. Any other value is rejected rather
+# than silently treated as not passed.
+TEST_OUTCOMES = ("passed", "failed", "skipped", "error")
+
 RUN_URL_RE = re.compile(r"https://github\.com/([^/\s]+/[^/\s]+)/actions/runs/([0-9]+)")
 COMMIT_RE = re.compile(r"[0-9a-f]{40}")
 CONTROL_TITLE_RE = re.compile(r"([a-z]{2})-([0-9]+)(?:\.([0-9]+))?")
@@ -155,8 +160,12 @@ def validate_summary(summary: Any) -> None:
     test_cases = summary["test_cases"]
     if not isinstance(test_cases, dict) or not test_cases:
         raise SummaryError("test_cases must be a non-empty object of test case -> outcome")
-    for tc in test_cases:
+    for tc, outcome in test_cases.items():
         _check_str(test_cases, tc, "test_cases")
+        if outcome not in TEST_OUTCOMES:
+            raise SummaryError(
+                f"test_cases.{tc}: unknown outcome {outcome!r}; expected one of {', '.join(TEST_OUTCOMES)}"
+            )
 
     runs = summary["runs"]
     if not isinstance(runs, list):
@@ -172,9 +181,18 @@ def validate_summary(summary: Any) -> None:
             raise SummaryError(f"{where}.control_for must be null or a non-empty string, got {control_for!r}")
         if run["tc"] not in test_cases:
             raise SummaryError(f"{where} ({run['id']}): test case {run['tc']} is not in test_cases")
-    for tc in test_cases:
-        if not any(run["tc"] == tc for run in runs):
+    for tc, outcome in test_cases.items():
+        tc_runs = [run for run in runs if run["tc"] == tc]
+        if not tc_runs:
             raise SummaryError(f"test_cases.{tc}: no runs recorded for it in runs")
+        # A test case passes only if all its runs are ok. For a control run, ok means the
+        # control showed the expected behaviour (e.g. stock U-Boot accepts what the test
+        # build refuses), so a failed control also leaves the test case unproven.
+        failed_runs = [run["id"] for run in tc_runs if not run["ok"]]
+        if outcome == "passed" and failed_runs:
+            raise SummaryError(
+                f"test_cases.{tc} is 'passed', but its run(s) {', '.join(failed_runs)} have ok: false"
+            )
 
 
 def load_summary(path: Path) -> tuple[dict[str, Any], str]:

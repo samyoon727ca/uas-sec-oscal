@@ -36,7 +36,7 @@ Paths on the left are JSON paths in `summary.json`. Paths on the right are relat
 | `date_utc` | `result.start`; `obs.collected`; `metadata.last-modified` (results and plan stub) | `summary.json` has only one timestamp, so `result.end` is left out. `last-modified` uses the run time rather than the editing time so that the output is deterministic. |
 | `passed` | `finding.target.status.state` (with `test_cases`); `finding.description` | See [Finding status](#finding-status). |
 | `test_cases` (keys) | one `obs` per key, in file order; `obs.props[test-case]` *(uas)*; `obs.title`; `finding.description` | |
-| `test_cases.<TC>` (values) | `obs.props[test-outcome]` *(uas)*; `obs.title`; `obs.description`; `finding.target.status.state` | |
+| `test_cases.<TC>` (values) | `obs.props[test-outcome]` *(uas)*; `obs.title`; `obs.description`; `finding.target.status.state` | One of `passed`, `failed`, `skipped` or `error`; any other value is an error. A test case recorded as `passed` must have `ok: true` on all its runs, control runs included, or the summary is rejected. |
 | `runs[]` where `tc` is `<TC>` | one bullet per run in that test case's `obs.description`: `- <id> (<role>): <title>. ok: <ok>` | If `control_for` is set, `<role>` is written as `control for <control_for>`. |
 
 Values that do not come from `summary.json`:

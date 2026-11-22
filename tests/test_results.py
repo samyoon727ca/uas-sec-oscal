@@ -11,10 +11,12 @@ from uas_oscal.component import UAS_NS, load_requirements
 from uas_oscal.mapping import DEFAULT_MAPPING, load_mapping
 from uas_oscal.results import (
     DEFAULT_SUMMARY,
+    SummaryError,
     build_assessment_results,
     control_title,
     generate,
     load_summary,
+    validate_summary,
 )
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -217,6 +219,25 @@ def test_satisfied_needs_passed_and_every_test_case_passed(passed, outcome, stat
         assert finding["target"]["status"]["state"] == state
 
 
+@pytest.mark.parametrize("outcome", ["failed", "skipped", "error"])
+def test_known_non_passed_outcomes_are_not_satisfied(outcome):
+    summary, _ = load_summary(DEFAULT_SUMMARY)
+    summary["test_cases"]["TC-04"] = outcome
+    validate_summary(summary)
+    for finding in _build(summary=summary)["results"][0]["findings"]:
+        assert finding["target"]["status"]["state"] == "not-satisfied"
+
+
+def test_passed_test_case_with_a_failed_control_run_is_rejected():
+    summary, _ = load_summary(DEFAULT_SUMMARY)
+    (control,) = [run for run in summary["runs"] if run["id"] == "TC-04e-control"]
+    control["ok"] = False
+    with pytest.raises(SummaryError, match="test_cases.TC-04 is 'passed', but its run\(s\) TC-04e-control"):
+        validate_summary(summary)
+    summary["test_cases"]["TC-04"] = "failed"
+    validate_summary(summary)
+
+
 # Approval gate
 
 
@@ -278,6 +299,12 @@ def _summary_with(change):
         (lambda s: s["environment"].update(run_id="1"), "run_url names run 38345099999, but run_id is 1"),
         (lambda s: s["runs"][0].update(title=""), "runs[0].title must be a non-empty string"),
         (lambda s: s.update(event="VE-08"), "summary.json is for VE-08, not VE-07"),
+        (lambda s: s["test_cases"].update({"TC-03": "PASS"}), "test_cases.TC-03: unknown outcome 'PASS'"),
+        (lambda s: s["test_cases"].update({"TC-03": "Passed"}), "test_cases.TC-03: unknown outcome 'Passed'"),
+        (
+            lambda s: s["test_cases"].update({"TC-03": "passed"}),
+            "test_cases.TC-03 is 'passed', but its run(s) TC-03b have ok: false",
+        ),
     ],
 )
 def test_malformed_summary_is_a_clean_cli_error(tmp_path, capsys, change, message):
