@@ -1,7 +1,9 @@
 # uas-sec-oscal
 OSCAL continuous-ATO evidence from UAS CI runs (pilot: P2 VE-07 / SR-005)
 
-The `uas_oscal` Python package reads P1 requirements and trace data and a P2 evidence summary, and generates OSCAL from them. NIST oscal-cli validates the output. `uas-oscal component` generates the component definition and `uas-oscal results` generates VE-07 assessment results; the `render` subcommand is still a stub.
+The `uas_oscal` Python package reads P1 requirements and trace data and a P2 evidence summary, and generates OSCAL from them. NIST oscal-cli validates the output. `uas-oscal component` generates the component definition, `uas-oscal results` generates VE-07 assessment results and `uas-oscal render` turns both into a one-page Markdown summary.
+
+**Rendered VE-07 results: [docs/results/ve07.md](docs/results/ve07.md)**
 
 ## Pins
 
@@ -23,6 +25,7 @@ scripts/
 oscal/handwritten/        hand-written OSCAL: golden VE-07 assessment results and a stub assessment plan
 oscal/generated/          generator output, committed: component-definition.json from `uas-oscal component`,
                           ve07-assessment-results.json from `uas-oscal results`
+docs/results/ve07.md      rendered VE-07 results page from `uas-oscal render`, committed
 docs/ve07-walkthrough.md  what the VE-07 results assert; summary.json -> OSCAL field mapping and UUID scheme
 data/upstream/            vendored inputs from uas-sec-p2-verified-boot; do not edit
   PROVENANCE.md           source repo, commit and original paths
@@ -30,7 +33,9 @@ data/upstream/            vendored inputs from uas-sec-p2-verified-boot; do not 
   p1/requirements.csv     P1 requirements
   p1/trace.csv            P1 threat-to-requirement trace
   evidence/ve07-ci/20261013-0d3ca38/summary.json   P2 VE-07 CI evidence summary
-.github/workflows/ci.yml  tests, then installs oscal-cli and validates oscal/handwritten/*.json and both generated files
+.github/workflows/ci.yml  `test` job: tests, then oscal-cli validation of hand-written and generated OSCAL;
+                          `rebuild` job: reruns component, results and render, fails if the committed outputs
+                          differ, then validates all OSCAL JSON
 ```
 
 ## Running tests
@@ -66,6 +71,17 @@ uas-oscal results --summary data/upstream/evidence/ve07-ci/20261013-0d3ca38/summ
 The generator follows the field mapping and UUID scheme in [docs/ve07-walkthrough.md](docs/ve07-walkthrough.md), and `oscal/handwritten/ve07-assessment-results.json` is its golden reference. It emits one result for the CI run and one observation per test case. It also emits one finding for each control that `mappings/controls.yaml` maps to the requirement VE-07 verifies (SR-005), so `si-7`, `si-7.9` and `si-7.15`. A finding is `satisfied` only when `passed` is `true` and every test case is `passed`. Otherwise it is `not-satisfied`. Findings carry the same draft marking as the component definition: a `mapping-status` prop, a DRAFT paragraph for unapproved rows, and a `(DRAFT)` title until the SR-005 row is approved and `approved_by` is set. A `summary.json` with a missing or unknown field is rejected with an error that names the field. Only VE-07 is supported.
 
 The output is deterministic. `last-modified` is the run's `date_utc`, and the hrefs to `summary.json` and to the assessment-plan stub are relative to the output file. `tests/test_results.py` fails if the committed file is out of date. It also checks the file against the golden file and lists the intentional differences in `INTENTIONAL_DIFFERENCES`.
+
+## Rendering the results page
+
+```sh
+uas-oscal render --results oscal/generated/ve07-assessment-results.json \
+  --component oscal/generated/component-definition.json -o docs/results/ve07.md
+```
+
+These are the defaults, so `uas-oscal render` alone does the same. Like the other commands' defaults, they resolve against the checkout the package is installed from, not the current directory, so pass explicit paths when running an install from another checkout. The page has a header with the CI run, the commit it tested and the run date; a table of requirement, control, finding status, mapping status and evidence links; the test-case outcomes; the mapped requirements this run does not assess; and a short "how this was produced" section. A DRAFT banner appears when any mapping row in either document is not `approved` or either document's title ends in `(DRAFT)`. Links are relative to the output file. `tests/test_render.py` fails if the committed page is out of date.
+
+The CI `rebuild` job reruns `component`, `results` and `render` on a full-history checkout, then runs `git diff --exit-code` on `oscal/generated/` and `docs/results/` (and fails on untracked files there). After changing an input, regenerate all three outputs in that order and commit them.
 
 ## Validating OSCAL locally
 

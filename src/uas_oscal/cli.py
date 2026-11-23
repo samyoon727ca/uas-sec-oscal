@@ -9,19 +9,16 @@ from pathlib import Path
 from uas_oscal import __version__
 from uas_oscal.component import DEFAULT_TRACE, generate
 from uas_oscal.mapping import DEFAULT_MAPPING, DEFAULT_REQUIREMENTS, MappingError
+from uas_oscal.render import DEFAULT_COMPONENT, DEFAULT_OUTPUT, DEFAULT_RESULTS
+from uas_oscal.render import generate as generate_render
 from uas_oscal.results import VERIFICATION_EVENTS
 from uas_oscal.results import generate as generate_results
 
 SUBCOMMANDS = {
     "component": "Emit an OSCAL component definition from the P1 requirements and trace.",
     "results": "Emit OSCAL assessment results from a P2 evidence summary.",
-    "render": "Render generated OSCAL for human review.",
+    "render": "Render generated assessment results and component definition as Markdown.",
 }
-
-
-def _not_implemented(args: argparse.Namespace) -> int:
-    print(f"uas-oscal {args.command}: not implemented", file=sys.stderr)
-    return 1
 
 
 def _component(args: argparse.Namespace) -> int:
@@ -46,6 +43,25 @@ def _results(args: argparse.Namespace) -> int:
     with args.output.open("w", encoding="utf-8", newline="\n") as f:
         f.write(text)
     return 0
+
+
+def _render(args: argparse.Namespace) -> int:
+    try:
+        # Encode inside the try: input text UTF-8 cannot encode (a lone surrogate from a
+        # JSON "\ud800" escape) is then a clean error, not a traceback and a half-written file.
+        data = generate_render(args.results, args.component, args.output).encode("utf-8")
+    except (ValueError, OSError) as exc:
+        print(f"uas-oscal render: {exc}", file=sys.stderr)
+        return 1
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_bytes(data)
+    return 0
+
+
+def _add_render_args(cmd: argparse.ArgumentParser) -> None:
+    cmd.add_argument("--results", type=Path, default=DEFAULT_RESULTS, help="OSCAL assessment results JSON")
+    cmd.add_argument("--component", type=Path, default=DEFAULT_COMPONENT, help="OSCAL component definition JSON")
+    cmd.add_argument("-o", "--output", type=Path, default=DEFAULT_OUTPUT, help="output Markdown file")
 
 
 def _add_results_args(cmd: argparse.ArgumentParser) -> None:
@@ -84,7 +100,8 @@ def build_parser() -> argparse.ArgumentParser:
             _add_results_args(cmd)
             cmd.set_defaults(func=_results)
         else:
-            cmd.set_defaults(func=_not_implemented)
+            _add_render_args(cmd)
+            cmd.set_defaults(func=_render)
     return parser
 
 

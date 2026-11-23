@@ -3,7 +3,7 @@ import sys
 
 import pytest
 
-from uas_oscal.cli import SUBCOMMANDS, main
+from uas_oscal.cli import main
 
 
 def test_help_lists_subcommands(capsys):
@@ -13,12 +13,6 @@ def test_help_lists_subcommands(capsys):
     out = capsys.readouterr().out
     for name in ("component", "results", "render"):
         assert name in out
-
-
-@pytest.mark.parametrize("name", sorted(set(SUBCOMMANDS) - {"component", "results"}))
-def test_stub_subcommands_exit_not_implemented(name, capsys):
-    assert main([name]) == 1
-    assert "not implemented" in capsys.readouterr().err
 
 
 def test_subcommand_is_required():
