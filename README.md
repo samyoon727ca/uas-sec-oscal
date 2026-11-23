@@ -93,4 +93,4 @@ bash scripts/install-oscal-cli.sh          # downloads to .tools/oscal-cli/ and 
 bash scripts/validate.sh path/to/file.json [more files...]
 ```
 
-`validate.sh` detects each file's model from its root (`component-definition`, `assessment-results`, `system-security-plan` and so on) in JSON, XML or YAML. It runs the matching `oscal-cli` command and exits non-zero if any file fails. Set `OSCAL_CLI` to use a different oscal-cli binary.
+`validate.sh` detects each file's model from its root (`component-definition`, `assessment-results`, `system-security-plan` and so on) in JSON, XML or YAML. It runs the matching `oscal-cli` command and exits non-zero if any file fails. Set `OSCAL_CLI` to use a different oscal-cli binary, as a path or a command name on `PATH`. JSON files are read with Python, so `python3` or `python` must be on `PATH`.
