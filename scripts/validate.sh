@@ -6,7 +6,8 @@
 # The OSCAL model of each file is detected from its root (a JSON key, an XML element or
 # a top-level YAML key) and the file is passed to `oscal-cli <model> validate`. The script
 # exits non-zero if any file fails validation or its model cannot be detected.
-# Set OSCAL_CLI to use an oscal-cli other than .tools/oscal-cli/bin/oscal-cli.
+# Set OSCAL_CLI to use an oscal-cli other than .tools/oscal-cli/bin/oscal-cli, either as a
+# path or as a command name on PATH. JSON files are read with Python (python3 or python).
 set -uo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -16,10 +17,19 @@ if [[ $# -eq 0 ]]; then
   echo "usage: $0 FILE..." >&2
   exit 2
 fi
-if [[ ! -f "${oscal_cli}" ]]; then
+# Resolve a bare command name on PATH as well as a path.
+if ! resolved="$(command -v -- "${oscal_cli}")"; then
   echo "error: ${oscal_cli} not found; run scripts/install-oscal-cli.sh first" >&2
   exit 2
 fi
+oscal_cli="${resolved}"
+python=""
+for candidate in python3 python; do
+  if "${candidate}" -c '' >/dev/null 2>&1; then
+    python="${candidate}"
+    break
+  fi
+done
 
 roots='catalog|profile|component-definition|system-security-plan|assessment-plan|assessment-results|plan-of-action-and-milestones'
 
@@ -27,7 +37,15 @@ roots='catalog|profile|component-definition|system-security-plan|assessment-plan
 detect_model() {
   local file="$1" root_name=""
   case "${file}" in
-    *.json) root_name="$(grep -oE -m1 "\"(${roots})\"[[:space:]]*:" -- "${file}" | grep -oE "${roots}" | head -n1)" ;;
+    *.json)
+      if [[ -n "${python}" ]]; then
+        # Only top-level keys count; a nested key named like a root (or "$schema") does not.
+        root_name="$("${python}" -c 'import json, sys
+doc = json.load(open(sys.argv[1], encoding="utf-8"))
+print("\n".join(doc) if isinstance(doc, dict) else "")' "${file}" 2>/dev/null |
+          tr -d '\r' | grep -xE "${roots}" | head -n1)"
+      fi
+      ;;
     *.xml) root_name="$(grep -oE -m1 "<(${roots})([[:space:]>/]|$)" -- "${file}" | grep -oE "${roots}" | head -n1)" ;;
     *.yaml | *.yml) root_name="$(grep -oE -m1 "^(${roots}):" -- "${file}" | grep -oE "${roots}" | head -n1)" ;;
   esac
