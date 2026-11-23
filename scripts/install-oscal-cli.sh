@@ -38,7 +38,8 @@ tmp="$(mktemp -d "${root}/.tools/tmp.XXXXXX")"
 trap 'rm -rf "${tmp}"' EXIT
 
 echo "Downloading ${OSCAL_CLI_URL}"
-curl -fsSL --retry 3 -o "${tmp}/oscal-cli.zip" "${OSCAL_CLI_URL}"
+# Maven Central rate-limits (HTTP 429) shared CI runners; back off long enough to ride it out.
+curl -fsSL --retry 6 --retry-delay 15 -o "${tmp}/oscal-cli.zip" "${OSCAL_CLI_URL}"
 
 actual="$(sha256 "${tmp}/oscal-cli.zip")"
 if [[ "${actual}" != "${OSCAL_CLI_SHA256}" ]]; then
