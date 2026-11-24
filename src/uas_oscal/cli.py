@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from uas_oscal import __version__
-from uas_oscal.component import DEFAULT_TRACE, generate
+from uas_oscal.component import DEFAULT_TRACE, DEFAULT_VERIFICATION, generate
 from uas_oscal.mapping import DEFAULT_MAPPING, DEFAULT_REQUIREMENTS, MappingError
 from uas_oscal.render import DEFAULT_COMPONENT, DEFAULT_OUTPUT, DEFAULT_RESULTS
 from uas_oscal.render import generate as generate_render
@@ -23,7 +23,7 @@ SUBCOMMANDS = {
 
 def _component(args: argparse.Namespace) -> int:
     try:
-        text = generate(args.requirements, args.trace, args.mapping, args.last_modified)
+        text = generate(args.requirements, args.trace, args.mapping, args.last_modified, args.verification)
     except (MappingError, ValueError, OSError) as exc:
         print(f"uas-oscal component: {exc}", file=sys.stderr)
         return 1
@@ -75,6 +75,9 @@ def _add_results_args(cmd: argparse.ArgumentParser) -> None:
 def _add_component_args(cmd: argparse.ArgumentParser) -> None:
     cmd.add_argument("--requirements", type=Path, default=DEFAULT_REQUIREMENTS, help="P1 requirements.csv")
     cmd.add_argument("--trace", type=Path, default=DEFAULT_TRACE, help="P1 trace.csv (threat_id,req_id)")
+    cmd.add_argument(
+        "--verification", type=Path, default=DEFAULT_VERIFICATION, help="P1 verification.csv (ve_id,req_ids)"
+    )
     cmd.add_argument("--mapping", type=Path, default=DEFAULT_MAPPING, help="control mapping YAML")
     cmd.add_argument("-o", "--output", type=Path, required=True, help="output JSON file")
     cmd.add_argument(

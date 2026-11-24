@@ -66,8 +66,9 @@ def _approve_all(ar=None, cd=None):
             _set_status(finding, "approved")
     if cd is not None:
         cd["metadata"]["title"] = cd["metadata"]["title"].removesuffix(" (DRAFT)")
-        for ir in cd["components"][0]["control-implementations"][0]["implemented-requirements"]:
-            _set_status(ir, "approved")
+        for component in cd["components"]:
+            for ir in component["control-implementations"][0]["implemented-requirements"]:
+                _set_status(ir, "approved")
 
 
 # Snapshot
@@ -124,7 +125,7 @@ def test_banner_when_one_component_row_is_unapproved(tmp_path):
 
     ar, cd = _copy(tmp_path, lambda d: _approve_all(ar=d), change_cd)
     text = generate(ar, cd, tmp_path / "out.md")
-    assert "> **DRAFT.** The control mapping for SR-003 is not approved" in text
+    assert "> **DRAFT.** The control mapping for SR-005 is not approved" in text
 
 
 def test_banner_when_only_the_title_is_draft(tmp_path):
@@ -295,7 +296,7 @@ def test_duplicate_implemented_requirement_is_an_error(tmp_path):
         irs.append(json.loads(json.dumps(irs[0])))
 
     ar, cd = _copy(tmp_path, change_cd=change_cd)
-    with pytest.raises(RenderError, match="duplicate implemented requirement for SR-003"):
+    with pytest.raises(RenderError, match="duplicate implemented requirement for SR-005"):
         generate(ar, cd, tmp_path / "out.md")
 
 
