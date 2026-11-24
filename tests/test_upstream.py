@@ -18,11 +18,12 @@ def _entries():
 ENTRIES = list(_entries())
 
 
-def test_sha256sums_lists_the_three_inputs():
+def test_sha256sums_lists_the_vendored_inputs():
     assert sorted(path for _, path in ENTRIES) == [
         "evidence/ve07-ci/20261013-0d3ca38/summary.json",
         "p1/requirements.csv",
         "p1/trace.csv",
+        "p1/verification.csv",
     ]
 
 

@@ -7,104 +7,8 @@
             "description": "P1 security requirements mapped to NIST SP 800-53 Rev. 5 controls in mappings/controls.yaml. Each implemented requirement is one (requirement, control) pair; its `mapping-status` prop is the mapping row's status, and only `approved` rows are final.",
             "implemented-requirements": [
               {
-                "control-id": "sc-8",
-                "description": "SR-003: The FC shall reject MAVLink messages that are unsigned or not signed with the provisioned key, except HEARTBEAT, RADIO_STATUS, ADSB_VEHICLE and COLLISION.\n\nMapped to `sc-8`: The FC \"shall reject MAVLink messages that are unsigned or not signed with the provisioned key\", which cryptographically protects the integrity of commands in transit (SC-8, SC-8(1)) and rejects messages from an unauthenticated session peer (SC-23).\n\nTraces to threats: THR-042, THR-049, THR-064.\n\nVerification: demonstration (D), evidence in P3. Allocated to CMP-FC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
-                "props": [
-                  {
-                    "name": "requirement-id",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "SR-003"
-                  },
-                  {
-                    "name": "mapping-status",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "proposed"
-                  },
-                  {
-                    "name": "threat-id",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "THR-042"
-                  },
-                  {
-                    "name": "threat-id",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "THR-049"
-                  },
-                  {
-                    "name": "threat-id",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "THR-064"
-                  }
-                ],
-                "uuid": "91c235a3-7f31-58dd-9da4-0515b750241a"
-              },
-              {
-                "control-id": "sc-8.1",
-                "description": "SR-003: The FC shall reject MAVLink messages that are unsigned or not signed with the provisioned key, except HEARTBEAT, RADIO_STATUS, ADSB_VEHICLE and COLLISION.\n\nMapped to `sc-8.1`: The FC \"shall reject MAVLink messages that are unsigned or not signed with the provisioned key\", which cryptographically protects the integrity of commands in transit (SC-8, SC-8(1)) and rejects messages from an unauthenticated session peer (SC-23).\n\nTraces to threats: THR-042, THR-049, THR-064.\n\nVerification: demonstration (D), evidence in P3. Allocated to CMP-FC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
-                "props": [
-                  {
-                    "name": "requirement-id",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "SR-003"
-                  },
-                  {
-                    "name": "mapping-status",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "proposed"
-                  },
-                  {
-                    "name": "threat-id",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "THR-042"
-                  },
-                  {
-                    "name": "threat-id",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "THR-049"
-                  },
-                  {
-                    "name": "threat-id",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "THR-064"
-                  }
-                ],
-                "uuid": "c52dd0b9-40b1-5169-b41a-7e0e1f704368"
-              },
-              {
-                "control-id": "sc-23",
-                "description": "SR-003: The FC shall reject MAVLink messages that are unsigned or not signed with the provisioned key, except HEARTBEAT, RADIO_STATUS, ADSB_VEHICLE and COLLISION.\n\nMapped to `sc-23`: The FC \"shall reject MAVLink messages that are unsigned or not signed with the provisioned key\", which cryptographically protects the integrity of commands in transit (SC-8, SC-8(1)) and rejects messages from an unauthenticated session peer (SC-23).\n\nTraces to threats: THR-042, THR-049, THR-064.\n\nVerification: demonstration (D), evidence in P3. Allocated to CMP-FC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
-                "props": [
-                  {
-                    "name": "requirement-id",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "SR-003"
-                  },
-                  {
-                    "name": "mapping-status",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "proposed"
-                  },
-                  {
-                    "name": "threat-id",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "THR-042"
-                  },
-                  {
-                    "name": "threat-id",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "THR-049"
-                  },
-                  {
-                    "name": "threat-id",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "THR-064"
-                  }
-                ],
-                "uuid": "1b84ba7c-a72d-551e-a0ae-d2a822f8f882"
-              },
-              {
                 "control-id": "si-7",
-                "description": "SR-005: The CC shall boot only boot-chain components signed with the project boot key, verified from a hardware root of trust.\n\nMapped to `si-7`: The CC \"shall boot only boot-chain components signed with the project boot key, verified from a hardware root of trust\", which is integrity verification of the boot process (SI-7, SI-7(9)) by authenticating code signatures before execution (SI-7(15)).\n\nTraces to threats: THR-008, THR-010, THR-032.\n\nVerification: test (T), evidence in P2. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
+                "description": "SR-005: The CC shall boot only boot-chain components signed with the project boot key, verified from a hardware root of trust.\n\nMapped to `si-7`: The CC \"shall boot only boot-chain components signed with the project boot key, verified from a hardware root of trust\", which is integrity verification of the boot process (SI-7, SI-7(9)) by authenticating code signatures before execution (SI-7(15)).\n\nTraces to threats: THR-008, THR-010, THR-032.\n\nVerification events: VE-07.\n\nVerification: test (T), evidence in P2. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
                 "props": [
                   {
                     "name": "requirement-id",
@@ -130,13 +34,18 @@
                     "name": "threat-id",
                     "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
                     "value": "THR-032"
+                  },
+                  {
+                    "name": "verification-event",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "VE-07"
                   }
                 ],
-                "uuid": "922a1bbe-7ace-5593-9e00-ae439c717f30"
+                "uuid": "66190bda-d9e4-5df3-8d71-4f59edfe0983"
               },
               {
                 "control-id": "si-7.9",
-                "description": "SR-005: The CC shall boot only boot-chain components signed with the project boot key, verified from a hardware root of trust.\n\nMapped to `si-7.9`: The CC \"shall boot only boot-chain components signed with the project boot key, verified from a hardware root of trust\", which is integrity verification of the boot process (SI-7, SI-7(9)) by authenticating code signatures before execution (SI-7(15)).\n\nTraces to threats: THR-008, THR-010, THR-032.\n\nVerification: test (T), evidence in P2. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
+                "description": "SR-005: The CC shall boot only boot-chain components signed with the project boot key, verified from a hardware root of trust.\n\nMapped to `si-7.9`: The CC \"shall boot only boot-chain components signed with the project boot key, verified from a hardware root of trust\", which is integrity verification of the boot process (SI-7, SI-7(9)) by authenticating code signatures before execution (SI-7(15)).\n\nTraces to threats: THR-008, THR-010, THR-032.\n\nVerification events: VE-07.\n\nVerification: test (T), evidence in P2. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
                 "props": [
                   {
                     "name": "requirement-id",
@@ -162,13 +71,18 @@
                     "name": "threat-id",
                     "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
                     "value": "THR-032"
+                  },
+                  {
+                    "name": "verification-event",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "VE-07"
                   }
                 ],
-                "uuid": "cee25d16-fe23-5641-be48-990d04cf98f2"
+                "uuid": "a06446a7-17aa-566e-a7ea-0466e9b7886d"
               },
               {
                 "control-id": "si-7.15",
-                "description": "SR-005: The CC shall boot only boot-chain components signed with the project boot key, verified from a hardware root of trust.\n\nMapped to `si-7.15`: The CC \"shall boot only boot-chain components signed with the project boot key, verified from a hardware root of trust\", which is integrity verification of the boot process (SI-7, SI-7(9)) by authenticating code signatures before execution (SI-7(15)).\n\nTraces to threats: THR-008, THR-010, THR-032.\n\nVerification: test (T), evidence in P2. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
+                "description": "SR-005: The CC shall boot only boot-chain components signed with the project boot key, verified from a hardware root of trust.\n\nMapped to `si-7.15`: The CC \"shall boot only boot-chain components signed with the project boot key, verified from a hardware root of trust\", which is integrity verification of the boot process (SI-7, SI-7(9)) by authenticating code signatures before execution (SI-7(15)).\n\nTraces to threats: THR-008, THR-010, THR-032.\n\nVerification events: VE-07.\n\nVerification: test (T), evidence in P2. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
                 "props": [
                   {
                     "name": "requirement-id",
@@ -194,13 +108,18 @@
                     "name": "threat-id",
                     "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
                     "value": "THR-032"
+                  },
+                  {
+                    "name": "verification-event",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "VE-07"
                   }
                 ],
-                "uuid": "9c49d672-ed65-57e7-b77c-232d941b3728"
+                "uuid": "9d43d8fb-d767-51c6-8e0f-c56a7cca8c56"
               },
               {
                 "control-id": "cm-14",
-                "description": "SR-007: The CC shall install only update images that are signed with the MSS release key and newer than the installed version.\n\nMapped to `cm-14`: The CC \"shall install only update images that are signed with the MSS release key\", which prevents installation of software whose signature is not from a recognized certificate (CM-14) and authenticates code before installation (SI-7(15)).\n\nTraces to threats: THR-008, THR-041, THR-059.\n\nVerification: test (T), evidence in P3. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
+                "description": "SR-007: The CC shall install only update images that are signed with the MSS release key and newer than the installed version.\n\nMapped to `cm-14`: The CC \"shall install only update images that are signed with the MSS release key\", which prevents installation of software whose signature is not from a recognized certificate (CM-14) and authenticates code before installation (SI-7(15)).\n\nTraces to threats: THR-008, THR-041, THR-059.\n\nVerification events: VE-03.\n\nVerification: test (T), evidence in P3. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
                 "props": [
                   {
                     "name": "requirement-id",
@@ -226,13 +145,18 @@
                     "name": "threat-id",
                     "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
                     "value": "THR-059"
+                  },
+                  {
+                    "name": "verification-event",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "VE-03"
                   }
                 ],
-                "uuid": "66f11d33-ba52-55e1-9c87-f1ab62df0203"
+                "uuid": "b54bf8a7-47c8-506d-ab49-729c98921ee3"
               },
               {
                 "control-id": "si-7.15",
-                "description": "SR-007: The CC shall install only update images that are signed with the MSS release key and newer than the installed version.\n\nMapped to `si-7.15`: The CC \"shall install only update images that are signed with the MSS release key\", which prevents installation of software whose signature is not from a recognized certificate (CM-14) and authenticates code before installation (SI-7(15)).\n\nTraces to threats: THR-008, THR-041, THR-059.\n\nVerification: test (T), evidence in P3. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
+                "description": "SR-007: The CC shall install only update images that are signed with the MSS release key and newer than the installed version.\n\nMapped to `si-7.15`: The CC \"shall install only update images that are signed with the MSS release key\", which prevents installation of software whose signature is not from a recognized certificate (CM-14) and authenticates code before installation (SI-7(15)).\n\nTraces to threats: THR-008, THR-041, THR-059.\n\nVerification events: VE-03.\n\nVerification: test (T), evidence in P3. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
                 "props": [
                   {
                     "name": "requirement-id",
@@ -258,13 +182,18 @@
                     "name": "threat-id",
                     "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
                     "value": "THR-059"
+                  },
+                  {
+                    "name": "verification-event",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "VE-03"
                   }
                 ],
-                "uuid": "a9ced8fa-ff1b-5580-b449-eed427e8e4e5"
+                "uuid": "538a9889-5036-55e3-9100-46625e151927"
               },
               {
                 "control-id": "au-3",
-                "description": "SR-013: The CC shall log each command it forwards to the FC with a timestamp and either the sending WireGuard peer or a CC-originated marker.\n\nMapped to `au-3`: The CC \"shall log each command it forwards to the FC with a timestamp and either the sending WireGuard peer or a CC-originated marker\", so each record carries when the event occurred and its source (AU-3) and binds each command to the peer that sent it (AU-10).\n\nTraces to threats: THR-004.\n\nVerification: test (T), evidence in P4. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
+                "description": "SR-013: The CC shall log each command it forwards to the FC with a timestamp and either the sending WireGuard peer or a CC-originated marker.\n\nMapped to `au-3`: The CC \"shall log each command it forwards to the FC with a timestamp and either the sending WireGuard peer or a CC-originated marker\", so each record carries when the event occurred and its source (AU-3) and binds each command to the peer that sent it (AU-10).\n\nTraces to threats: THR-004.\n\nVerification events: VE-10.\n\nVerification: test (T), evidence in P4. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
                 "props": [
                   {
                     "name": "requirement-id",
@@ -280,13 +209,18 @@
                     "name": "threat-id",
                     "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
                     "value": "THR-004"
+                  },
+                  {
+                    "name": "verification-event",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "VE-10"
                   }
                 ],
-                "uuid": "0dedf782-1426-5d69-8e7b-e717d2984fb3"
+                "uuid": "72642f3a-a2e4-5b44-811f-5dbb48a9da52"
               },
               {
                 "control-id": "au-10",
-                "description": "SR-013: The CC shall log each command it forwards to the FC with a timestamp and either the sending WireGuard peer or a CC-originated marker.\n\nMapped to `au-10`: The CC \"shall log each command it forwards to the FC with a timestamp and either the sending WireGuard peer or a CC-originated marker\", so each record carries when the event occurred and its source (AU-3) and binds each command to the peer that sent it (AU-10).\n\nTraces to threats: THR-004.\n\nVerification: test (T), evidence in P4. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
+                "description": "SR-013: The CC shall log each command it forwards to the FC with a timestamp and either the sending WireGuard peer or a CC-originated marker.\n\nMapped to `au-10`: The CC \"shall log each command it forwards to the FC with a timestamp and either the sending WireGuard peer or a CC-originated marker\", so each record carries when the event occurred and its source (AU-3) and binds each command to the peer that sent it (AU-10).\n\nTraces to threats: THR-004.\n\nVerification events: VE-10.\n\nVerification: test (T), evidence in P4. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
                 "props": [
                   {
                     "name": "requirement-id",
@@ -302,13 +236,173 @@
                     "name": "threat-id",
                     "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
                     "value": "THR-004"
+                  },
+                  {
+                    "name": "verification-event",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "VE-10"
                   }
                 ],
-                "uuid": "1081b832-6a7c-5c53-8459-68f60154c11d"
+                "uuid": "e5a81128-0f4b-55d6-8d61-441745e66035"
+              }
+            ],
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/v1.6.0/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "uuid": "2420eb5a-9508-550e-a0f6-18f918abf915"
+          }
+        ],
+        "description": "UAS companion computer (CC), P1 allocation CMP-CC. The control implementation covers the requirements in mappings/controls.yaml that data/upstream/p1/requirements.csv allocates to CMP-CC. Verified boot of the CC is built and tested in samyoon727ca/uas-sec-p2-verified-boot; each implemented requirement names the project (P2, P3, ...) that holds its evidence.",
+        "props": [
+          {
+            "name": "allocated-to",
+            "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+            "value": "CMP-CC"
+          }
+        ],
+        "title": "UAS companion computer (CC)",
+        "type": "software",
+        "uuid": "aeaeeb97-2c06-53bc-93c9-f1a6c667d674"
+      },
+      {
+        "control-implementations": [
+          {
+            "description": "P1 security requirements mapped to NIST SP 800-53 Rev. 5 controls in mappings/controls.yaml. Each implemented requirement is one (requirement, control) pair; its `mapping-status` prop is the mapping row's status, and only `approved` rows are final.",
+            "implemented-requirements": [
+              {
+                "control-id": "sc-8",
+                "description": "SR-003: The FC shall reject MAVLink messages that are unsigned or not signed with the provisioned key, except HEARTBEAT, RADIO_STATUS, ADSB_VEHICLE and COLLISION.\n\nMapped to `sc-8`: The FC \"shall reject MAVLink messages that are unsigned or not signed with the provisioned key\", which cryptographically protects the integrity of commands in transit (SC-8, SC-8(1)) and rejects messages from an unauthenticated session peer (SC-23).\n\nTraces to threats: THR-042, THR-049, THR-064.\n\nVerification events: VE-02.\n\nVerification: demonstration (D), evidence in P3. Allocated to CMP-FC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
+                "props": [
+                  {
+                    "name": "requirement-id",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "SR-003"
+                  },
+                  {
+                    "name": "mapping-status",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "proposed"
+                  },
+                  {
+                    "name": "threat-id",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "THR-042"
+                  },
+                  {
+                    "name": "threat-id",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "THR-049"
+                  },
+                  {
+                    "name": "threat-id",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "THR-064"
+                  },
+                  {
+                    "name": "verification-event",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "VE-02"
+                  }
+                ],
+                "uuid": "806c6485-76ca-597b-ac29-b73cf7e25896"
               },
               {
+                "control-id": "sc-8.1",
+                "description": "SR-003: The FC shall reject MAVLink messages that are unsigned or not signed with the provisioned key, except HEARTBEAT, RADIO_STATUS, ADSB_VEHICLE and COLLISION.\n\nMapped to `sc-8.1`: The FC \"shall reject MAVLink messages that are unsigned or not signed with the provisioned key\", which cryptographically protects the integrity of commands in transit (SC-8, SC-8(1)) and rejects messages from an unauthenticated session peer (SC-23).\n\nTraces to threats: THR-042, THR-049, THR-064.\n\nVerification events: VE-02.\n\nVerification: demonstration (D), evidence in P3. Allocated to CMP-FC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
+                "props": [
+                  {
+                    "name": "requirement-id",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "SR-003"
+                  },
+                  {
+                    "name": "mapping-status",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "proposed"
+                  },
+                  {
+                    "name": "threat-id",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "THR-042"
+                  },
+                  {
+                    "name": "threat-id",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "THR-049"
+                  },
+                  {
+                    "name": "threat-id",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "THR-064"
+                  },
+                  {
+                    "name": "verification-event",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "VE-02"
+                  }
+                ],
+                "uuid": "c9ad9fe3-2a78-5de4-9282-35e62c6fd57a"
+              },
+              {
+                "control-id": "sc-23",
+                "description": "SR-003: The FC shall reject MAVLink messages that are unsigned or not signed with the provisioned key, except HEARTBEAT, RADIO_STATUS, ADSB_VEHICLE and COLLISION.\n\nMapped to `sc-23`: The FC \"shall reject MAVLink messages that are unsigned or not signed with the provisioned key\", which cryptographically protects the integrity of commands in transit (SC-8, SC-8(1)) and rejects messages from an unauthenticated session peer (SC-23).\n\nTraces to threats: THR-042, THR-049, THR-064.\n\nVerification events: VE-02.\n\nVerification: demonstration (D), evidence in P3. Allocated to CMP-FC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
+                "props": [
+                  {
+                    "name": "requirement-id",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "SR-003"
+                  },
+                  {
+                    "name": "mapping-status",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "proposed"
+                  },
+                  {
+                    "name": "threat-id",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "THR-042"
+                  },
+                  {
+                    "name": "threat-id",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "THR-049"
+                  },
+                  {
+                    "name": "threat-id",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "THR-064"
+                  },
+                  {
+                    "name": "verification-event",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "VE-02"
+                  }
+                ],
+                "uuid": "1683561b-a3aa-5959-8373-9cfef9821c5b"
+              }
+            ],
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/v1.6.0/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "uuid": "18622a7c-97eb-5818-bf1b-96b890964d99"
+          }
+        ],
+        "description": "UAS flight controller (FC), P1 allocation CMP-FC. The control implementation covers the requirements in mappings/controls.yaml that data/upstream/p1/requirements.csv allocates to CMP-FC.",
+        "props": [
+          {
+            "name": "allocated-to",
+            "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+            "value": "CMP-FC"
+          }
+        ],
+        "title": "UAS flight controller (FC)",
+        "type": "software",
+        "uuid": "206740c3-25b4-5684-961b-0f198c0648a4"
+      },
+      {
+        "control-implementations": [
+          {
+            "description": "P1 security requirements mapped to NIST SP 800-53 Rev. 5 controls in mappings/controls.yaml. Each implemented requirement is one (requirement, control) pair; its `mapping-status` prop is the mapping row's status, and only `approved` rows are final.",
+            "implemented-requirements": [
+              {
                 "control-id": "sc-28",
-                "description": "SR-027: The GCS shall use full-disk encryption.\n\nMapped to `sc-28`: The GCS \"shall use full-disk encryption\", which protects information at rest (SC-28) using cryptographic mechanisms (SC-28(1)).\n\nTraces to threats: THR-016, THR-037, THR-038.\n\nVerification: inspection (I), evidence in P6. Allocated to CMP-GCS.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
+                "description": "SR-027: The GCS shall use full-disk encryption.\n\nMapped to `sc-28`: The GCS \"shall use full-disk encryption\", which protects information at rest (SC-28) using cryptographic mechanisms (SC-28(1)).\n\nTraces to threats: THR-016, THR-037, THR-038.\n\nVerification events: VE-15.\n\nVerification: inspection (I), evidence in P6. Allocated to CMP-GCS.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
                 "props": [
                   {
                     "name": "requirement-id",
@@ -334,13 +428,18 @@
                     "name": "threat-id",
                     "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
                     "value": "THR-038"
+                  },
+                  {
+                    "name": "verification-event",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "VE-15"
                   }
                 ],
-                "uuid": "e694da62-5782-5db8-a568-b0243d0ee06d"
+                "uuid": "244f74a6-7e43-5738-950a-a71da557e4ee"
               },
               {
                 "control-id": "sc-28.1",
-                "description": "SR-027: The GCS shall use full-disk encryption.\n\nMapped to `sc-28.1`: The GCS \"shall use full-disk encryption\", which protects information at rest (SC-28) using cryptographic mechanisms (SC-28(1)).\n\nTraces to threats: THR-016, THR-037, THR-038.\n\nVerification: inspection (I), evidence in P6. Allocated to CMP-GCS.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
+                "description": "SR-027: The GCS shall use full-disk encryption.\n\nMapped to `sc-28.1`: The GCS \"shall use full-disk encryption\", which protects information at rest (SC-28) using cryptographic mechanisms (SC-28(1)).\n\nTraces to threats: THR-016, THR-037, THR-038.\n\nVerification events: VE-15.\n\nVerification: inspection (I), evidence in P6. Allocated to CMP-GCS.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
                 "props": [
                   {
                     "name": "requirement-id",
@@ -366,26 +465,38 @@
                     "name": "threat-id",
                     "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
                     "value": "THR-038"
+                  },
+                  {
+                    "name": "verification-event",
+                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+                    "value": "VE-15"
                   }
                 ],
-                "uuid": "53acd338-4022-50ae-aa75-2c516ea22080"
+                "uuid": "40cc7b2e-1b8a-512e-97b2-881afcfe86f1"
               }
             ],
-            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
-            "uuid": "491b60b7-2996-597c-bd93-beb56ec57b09"
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/v1.6.0/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "uuid": "ba21ce2e-c966-52e9-9bd8-19918343b5a7"
           }
         ],
-        "description": "Verified boot of the UAS companion computer (CC), built and tested in samyoon727ca/uas-sec-p2-verified-boot. The control implementation covers every requirement in mappings/controls.yaml, including requirements allocated to other UAS components; each description names the allocation.",
-        "title": "UAS P2 verified-boot subsystem",
+        "description": "UAS ground control station (GCS), P1 allocation CMP-GCS. The control implementation covers the requirements in mappings/controls.yaml that data/upstream/p1/requirements.csv allocates to CMP-GCS.",
+        "props": [
+          {
+            "name": "allocated-to",
+            "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
+            "value": "CMP-GCS"
+          }
+        ],
+        "title": "UAS ground control station (GCS)",
         "type": "software",
-        "uuid": "3dbd0603-23a4-56fd-92e4-f357c5eea6f1"
+        "uuid": "dfbcdd1c-a199-5e0c-8bb9-a87eed4686ba"
       }
     ],
     "metadata": {
       "last-modified": "2026-11-21T13:48:49Z",
       "oscal-version": "1.1.2",
-      "remarks": "Generated by `uas-oscal component` from data/upstream/p1/requirements.csv, data/upstream/p1/trace.csv and mappings/controls.yaml. Do not edit by hand.",
-      "title": "UAS P2 verified-boot subsystem: NIST SP 800-53 Rev. 5 control implementation (DRAFT)",
+      "remarks": "Generated by `uas-oscal component` from data/upstream/p1/requirements.csv, data/upstream/p1/trace.csv, data/upstream/p1/verification.csv and mappings/controls.yaml. Do not edit by hand.",
+      "title": "UAS P2 verified-boot project: NIST SP 800-53 Rev. 5 control implementations (DRAFT)",
       "version": "1.0.0"
     },
     "uuid": "b8a54e3f-a918-50c7-9a05-0d58c2e1f8d4"

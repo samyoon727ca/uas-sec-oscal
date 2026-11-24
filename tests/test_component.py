@@ -10,13 +10,16 @@ import pytest
 
 from uas_oscal.cli import main
 from uas_oscal.component import (
+    CATALOG_HREF,
     DEFAULT_TRACE,
+    DEFAULT_VERIFICATION,
     UAS_NS,
     build_component_definition,
     commit_timestamp,
     generate,
     load_requirements,
     load_trace,
+    load_verification,
     normalize_timestamp,
 )
 from uas_oscal.mapping import DEFAULT_MAPPING, DEFAULT_REQUIREMENTS, load_mapping
@@ -32,14 +35,18 @@ def _build(mapping=None):
         mapping or load_mapping(),
         load_requirements(),
         load_trace(),
+        load_verification(),
         FIXED,
     )["component-definition"]
 
 
 def _implemented(cd):
-    (component,) = cd["components"]
-    (impl,) = component["control-implementations"]
-    return impl["implemented-requirements"]
+    """Every implemented requirement, across components, in document order."""
+    irs = []
+    for component in cd["components"]:
+        (impl,) = component["control-implementations"]
+        irs += impl["implemented-requirements"]
+    return irs
 
 
 def _props(obj, name):
@@ -75,6 +82,7 @@ def test_cli_twice_is_byte_identical(tmp_path):
             "component",
             "--requirements", str(DEFAULT_REQUIREMENTS),
             "--trace", str(DEFAULT_TRACE),
+            "--verification", str(DEFAULT_VERIFICATION),
             "--mapping", str(DEFAULT_MAPPING),
             "--last-modified", FIXED,
             "-o", str(out),
@@ -222,6 +230,10 @@ REQ_HEADER = "req_id,statement,rationale,allocated_to,verification,evidence_repo
             REQ_HEADER + "SR-005,s,r,CMP-CC,T,P2,a\nSR-003,s,r,CMP-FC,T,P2,a\nSR-005,t,r,CMP-CC,T,P2,a\n",
             ":4: duplicate req_id SR-005 (first on line 2)",
         ),
+        ("--verification", "ve,reqs\nVE-07,SR-005\n", "missing column(s) ve_id, req_ids"),
+        ("--verification", "ve_id,req_ids\nVE-07,\n", ":2: missing value(s) for req_ids"),
+        ("--verification", "ve_id,req_ids\nVE-07,SR-005;\n", ":2: empty entry in req_ids"),
+        ("--verification", "ve_id,req_ids\nVE-07,SR-005\nVE-07,SR-010\n", ":3: duplicate ve_id VE-07 (first on line 2)"),
     ],
 )
 def test_malformed_csv_is_a_clean_cli_error(tmp_path, capsys, flag, content, message):
@@ -240,25 +252,64 @@ def test_malformed_csv_is_a_clean_cli_error(tmp_path, capsys, flag, content, mes
 
 def test_identifiers_follow_the_uuid5_scheme():
     cd = _build()
-    (component,) = cd["components"]
-    (impl,) = component["control-implementations"]
     assert cd["uuid"] == str(uuid.uuid5(NS, "component-definition/uas-p2-verified-boot"))
-    assert component["uuid"] == str(uuid.uuid5(NS, "component/uas-p2-verified-boot"))
-    assert impl["uuid"] == str(uuid.uuid5(NS, "control-implementation/uas-p2-verified-boot/nist-sp-800-53-rev5"))
-    assert "800-53" in impl["source"] and "rev5" in impl["source"]
-    for ir in _implemented(cd):
-        (req,) = _props(ir, "requirement-id")
-        assert ir["uuid"] == str(uuid.uuid5(NS, f"implemented-requirement/uas-p2-verified-boot/{req}/{ir['control-id']}"))
-    uuids = [cd["uuid"], component["uuid"], impl["uuid"]] + [ir["uuid"] for ir in _implemented(cd)]
+    uuids = [cd["uuid"]]
+    for component in cd["components"]:
+        (slug,) = [p["value"].lower() for p in component["props"] if p["name"] == "allocated-to"]
+        (impl,) = component["control-implementations"]
+        assert component["uuid"] == str(uuid.uuid5(NS, f"component/uas-p2-verified-boot/{slug}"))
+        assert impl["uuid"] == str(
+            uuid.uuid5(NS, f"control-implementation/uas-p2-verified-boot/{slug}/nist-sp-800-53-rev5")
+        )
+        assert "800-53" in impl["source"] and "rev5" in impl["source"]
+        for ir in impl["implemented-requirements"]:
+            (req,) = _props(ir, "requirement-id")
+            name = f"implemented-requirement/uas-p2-verified-boot/{slug}/{req}/{ir['control-id']}"
+            assert ir["uuid"] == str(uuid.uuid5(NS, name))
+        uuids += [component["uuid"], impl["uuid"]] + [ir["uuid"] for ir in impl["implemented-requirements"]]
     assert len(set(uuids)) == len(uuids)
+
+
+def test_catalog_href_is_pinned_to_a_release():
+    assert "/oscal-content/v1.6.0/" in CATALOG_HREF
+    for component in _build()["components"]:
+        (impl,) = component["control-implementations"]
+        assert impl["source"] == CATALOG_HREF
+
+
+def test_each_component_holds_only_requirements_allocated_to_it():
+    requirements = load_requirements()
+    cd = _build()
+    allocations = []
+    for component in cd["components"]:
+        (allocation,) = [p["value"] for p in component["props"] if p["name"] == "allocated-to"]
+        allocations.append(allocation)
+        (impl,) = component["control-implementations"]
+        for ir in impl["implemented-requirements"]:
+            (req_id,) = _props(ir, "requirement-id")
+            assert requirements[req_id]["allocated_to"] == allocation
+    assert allocations == ["CMP-CC", "CMP-FC", "CMP-GCS"]
+    titles = [c["title"] for c in cd["components"]]
+    assert titles == ["UAS companion computer (CC)", "UAS flight controller (FC)", "UAS ground control station (GCS)"]
+    assert all("verified-boot" not in title for title in titles)
+
+
+def test_unknown_allocation_gets_a_component_titled_by_its_id():
+    requirements = load_requirements()
+    requirements["SR-027"] = {**requirements["SR-027"], "allocated_to": "CMP-NEW"}
+    cd = build_component_definition(load_mapping(), requirements, load_trace(), load_verification(), FIXED)
+    titles = [c["title"] for c in cd["component-definition"]["components"]]
+    assert titles == ["UAS companion computer (CC)", "UAS flight controller (FC)", "UAS component CMP-NEW"]
 
 
 def test_only_mapped_requirements_and_controls_appear():
     mapping = load_mapping()
-    expected = [(row["requirement_id"], c) for row in mapping["mappings"] for c in row["controls"]]
+    statements = load_requirements()
+    # Grouped by component (allocation, sorted), in mapping order within each.
+    rows = sorted(mapping["mappings"], key=lambda row: statements[row["requirement_id"]]["allocated_to"])
+    expected = [(row["requirement_id"], c) for row in rows for c in row["controls"]]
     got = [(_props(ir, "requirement-id")[0], ir["control-id"]) for ir in _implemented(_build())]
     assert got == expected
-    statements = load_requirements()
     unmapped = set(statements) - {row["requirement_id"] for row in mapping["mappings"]}
     text = generate(last_modified=FIXED)
     for req_id in unmapped:
@@ -285,6 +336,37 @@ def test_sr005_trace_links():
     assert "Verification: test (T), evidence in P2." in si7["description"]
 
 
+def test_sr005_verification_events():
+    for ir in _implemented(_build()):
+        if _props(ir, "requirement-id") == ["SR-005"]:
+            assert _props(ir, "verification-event") == ["VE-07"]
+            assert "Verification events: VE-07." in ir["description"]
+
+
+def test_every_mapped_requirement_carries_its_verification_events():
+    events = load_verification()
+    for ir in _implemented(_build()):
+        (req_id,) = _props(ir, "requirement-id")
+        assert events[req_id]
+        assert _props(ir, "verification-event") == events[req_id]
+        assert f"Verification events: {', '.join(events[req_id])}." in ir["description"]
+
+
+def test_verification_events_are_split_and_sorted(tmp_path):
+    table = tmp_path / "verification.csv"
+    table.write_text("ve_id,req_ids\nVE-09,SR-005\nVE-07,SR-005; SR-010\n", encoding="utf-8")
+    assert load_verification(table) == {"SR-005": ["VE-07", "VE-09"], "SR-010": ["VE-07"]}
+
+
+def test_requirement_without_verification_rows_says_so(tmp_path):
+    table = tmp_path / "verification.csv"
+    table.write_text("ve_id,req_ids\n", encoding="utf-8")
+    cd = build_component_definition(load_mapping(), load_requirements(), load_trace(), load_verification(table), FIXED)
+    for ir in _implemented(cd["component-definition"]):
+        assert _props(ir, "verification-event") == []
+        assert "Verification events: none recorded in verification.csv." in ir["description"]
+
+
 def test_trace_links_are_deduplicated():
     # trace.csv lists THR-004 -> SR-013 twice.
     assert load_trace()["SR-013"] == ["THR-004"]
@@ -293,7 +375,7 @@ def test_trace_links_are_deduplicated():
 def test_requirement_without_trace_rows_says_so(tmp_path):
     trace = tmp_path / "trace.csv"
     trace.write_text("threat_id,req_id\n", encoding="utf-8")
-    cd = build_component_definition(load_mapping(), load_requirements(), load_trace(trace), FIXED)
+    cd = build_component_definition(load_mapping(), load_requirements(), load_trace(trace), load_verification(), FIXED)
     for ir in _implemented(cd["component-definition"]):
         assert _props(ir, "threat-id") == []
         assert "Traces to threats: none recorded in trace.csv." in ir["description"]
