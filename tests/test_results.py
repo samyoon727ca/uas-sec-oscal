@@ -219,6 +219,26 @@ def test_satisfied_needs_passed_and_every_test_case_passed(passed, outcome, stat
         assert finding["target"]["status"]["state"] == state
 
 
+@pytest.mark.parametrize("tc", ["TC-01", "TC-03", "TC-04", "TC-05", "TC-10"])
+def test_missing_expected_test_case_is_not_satisfied(tc):
+    summary, _ = load_summary(DEFAULT_SUMMARY)
+    del summary["test_cases"][tc]
+    summary["runs"] = [run for run in summary["runs"] if run["tc"] != tc]
+    validate_summary(summary)
+    assert summary["passed"] is True
+    assert all(v == "passed" for v in summary["test_cases"].values())
+    findings = _build(summary=summary)["results"][0]["findings"]
+    assert len(findings) == 3
+    for finding in findings:
+        assert finding["target"]["status"]["state"] == "not-satisfied"
+        assert f"Expected test case(s) {tc} are missing from `test_cases`." in finding["description"]
+
+
+def test_failing_fixture_lists_its_missing_test_cases():
+    for finding in _build(FAILING)["results"][0]["findings"]:
+        assert "Expected test case(s) TC-04, TC-05, TC-10 are missing from `test_cases`." in finding["description"]
+
+
 @pytest.mark.parametrize("outcome", ["failed", "skipped", "error"])
 def test_known_non_passed_outcomes_are_not_satisfied(outcome):
     summary, _ = load_summary(DEFAULT_SUMMARY)

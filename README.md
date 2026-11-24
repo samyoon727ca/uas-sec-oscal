@@ -66,10 +66,11 @@ The output is deterministic. UUIDs are uuid5 values in the project namespace (se
 ## Generating the VE-07 assessment results
 
 ```sh
-uas-oscal results --summary data/upstream/evidence/ve07-ci/20261013-0d3ca38/summary.json   --mapping mappings/controls.yaml --ve VE-07 -o oscal/generated/ve07-assessment-results.json
+uas-oscal results --summary data/upstream/evidence/ve07-ci/20261013-0d3ca38/summary.json \
+  --mapping mappings/controls.yaml --ve VE-07 -o oscal/generated/ve07-assessment-results.json
 ```
 
-The generator follows the field mapping and UUID scheme in [docs/ve07-walkthrough.md](docs/ve07-walkthrough.md), and `oscal/handwritten/ve07-assessment-results.json` is its golden reference. It emits one result for the CI run and one observation per test case. It also emits one finding for each control that `mappings/controls.yaml` maps to the requirement VE-07 verifies (SR-005), so `si-7`, `si-7.9` and `si-7.15`. A finding is `satisfied` only when `passed` is `true` and every test case is `passed`. Otherwise it is `not-satisfied`. Findings carry the same draft marking as the component definition: a `mapping-status` prop, a DRAFT paragraph for unapproved rows, and a `(DRAFT)` title until the SR-005 row is approved and `approved_by` is set. A `summary.json` with a missing or unknown field is rejected with an error that names the field. Only VE-07 is supported.
+The generator follows the field mapping and UUID scheme in [docs/ve07-walkthrough.md](docs/ve07-walkthrough.md), and `oscal/handwritten/ve07-assessment-results.json` is its golden reference. It emits one result for the CI run and one observation per test case. It also emits one finding for each control that `mappings/controls.yaml` maps to the requirement VE-07 verifies (SR-005), so `si-7`, `si-7.9` and `si-7.15`. A finding is `satisfied` only when `passed` is `true`, `test_cases` has every test case VE-07 expects (TC-01, TC-03, TC-04, TC-05 and TC-10), and every test case is `passed`. Otherwise it is `not-satisfied`. Findings carry the same draft marking as the component definition: a `mapping-status` prop, a DRAFT paragraph for unapproved rows, and a `(DRAFT)` title until the SR-005 row is approved and `approved_by` is set. A `summary.json` with a missing or unknown field is rejected with an error that names the field. Only VE-07 is supported.
 
 The output is deterministic. `last-modified` is the run's `date_utc`, and the hrefs to `summary.json` and to the assessment-plan stub are relative to the output file. `tests/test_results.py` fails if the committed file is out of date. It also checks the file against the golden file and lists the intentional differences in `INTENTIONAL_DIFFERENCES`.
 
