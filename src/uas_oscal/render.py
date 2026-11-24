@@ -38,13 +38,11 @@ DEFAULT_OUTPUT = REPO_ROOT / "docs" / "results" / "ve07.md"
 RUN_URL_RE = re.compile(r"https://github\.com/([^/\s]+/[^/\s]+)/actions/runs/([0-9]+)")
 OBJECTIVE_RE = re.compile(r"(.+)_obj")
 STATE_LABELS = {"satisfied": "✅ satisfied", "not-satisfied": "❌ not satisfied"}
+KIND_NAMES = {str: "a string", list: "a list", dict: "an object"}
 
 
 class RenderError(ValueError):
     """An input document is missing something the page needs."""
-
-
-KIND_NAMES = {str: "a string", list: "a list", dict: "an object"}
 
 
 # Every read from an input document goes through _get or _objects, which check the
