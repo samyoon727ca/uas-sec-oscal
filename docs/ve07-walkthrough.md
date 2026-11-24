@@ -20,7 +20,7 @@ bash scripts/validate.sh oscal/handwritten/*.json
 
 ## Field mapping: summary.json → OSCAL
 
-Paths on the left are JSON paths in `summary.json`. Paths on the right are relative to `assessment-results` in the results document. `result` is `results[0]`. `obs` is one entry of `result.observations`. `finding` is `result.findings[0]`. Props marked *(uas)* use the namespace `https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal`.
+Paths on the left are JSON paths in `summary.json`. Paths on the right are relative to `assessment-results` in the results document. `result` is `results[0]`. `obs` is one entry of `result.observations`. `finding` is any one entry of `result.findings`: there is one finding per control that `mappings/controls.yaml` maps to SR-005. Props marked *(uas)* use the namespace `https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal`.
 
 | summary.json | OSCAL | Notes |
 |---|---|---|
@@ -46,7 +46,7 @@ Values that do not come from `summary.json`:
 | `obs.relevant-evidence[0].href` | `../../data/upstream/evidence/ve07-ci/20261013-0d3ca38/summary.json` | Path of the input file, relative to the output file |
 | SHA-256 in `obs.relevant-evidence[0].description` | `34d37ae6…5e5129` | `data/upstream/SHA256SUMS` (the SHA-256 of the input file) |
 | `finding.props[requirement-id]` *(uas)*; requirement text in `finding.description` | `SR-005` and its `statement` | `data/upstream/p1/requirements.csv` |
-| `result.reviewed-controls…control-id`; `finding.target.target-id` | `si-7`; `si-7_obj` | The pilot's fixed SR-005 → SI-7 mapping (issue #2). `si-7_obj` is the id of SI-7's assessment objective in the SP 800-53 rev. 5 OSCAL catalog. Control ids are lowercase, as in the catalog. |
+| `result.reviewed-controls…control-id`; `finding.target.target-id` | each control mapped to SR-005 (`si-7`, `si-7.9`, `si-7.15`); `<control>_obj` (such as `si-7_obj`) | `mappings/controls.yaml`. The generator emits one finding per mapped control. The hand-written golden file has only the pilot's SR-005 → SI-7 finding (issue #2); `INTENTIONAL_DIFFERENCES` in `tests/test_results.py` lists how the generated file differs from it. `si-7_obj` is the id of SI-7's assessment objective in the SP 800-53 rev. 5 OSCAL catalog. Control ids are lowercase, as in the catalog. |
 | `finding.target.type` | `objective-id` | Constant |
 | `obs.methods`; `obs.types` | `["TEST"]`; `["control-objective"]` | Constants. VE-07 is an automated test. |
 | `import-ap.href` | `ve07-assessment-plan.json` | The plan stub next to the results file |
@@ -56,7 +56,7 @@ These `summary.json` fields are not mapped: `environment.kind`, `environment.run
 
 ## Finding status
 
-`finding.target.status.state` is `satisfied` only when `passed` is `true` and every value in `test_cases` is `passed`. Otherwise it is `not-satisfied`. In this run, `passed` is `true` and all five test cases are `passed`, so the state is `satisfied`.
+`finding.target.status.state` is `satisfied` only when `passed` is `true`, `test_cases` has every test case VE-07 expects (TC-01, TC-03, TC-04, TC-05 and TC-10, listed in `VERIFICATION_EVENTS` in `src/uas_oscal/results.py`), and every value in `test_cases` is `passed`. Otherwise it is `not-satisfied`, and the finding description names any expected test case that is missing. In this run, `passed` is `true` and all five test cases are `passed`, so the state is `satisfied`.
 
 ## Deterministic UUIDs
 

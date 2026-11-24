@@ -6,8 +6,9 @@ The field mapping and UUID scheme are specified in docs/ve07-walkthrough.md, and
 The document has one result for the CI run, one observation per test case in
 ``test_cases`` (in file order), and one finding per (requirement, control) pair
 that ``mappings/controls.yaml`` maps for the requirements the verification event
-verifies. A finding is ``satisfied`` only when ``passed`` is true and every test
-case is ``passed``; otherwise it is ``not-satisfied``. A test case recorded as
+verifies. A finding is ``satisfied`` only when ``passed`` is true, ``test_cases``
+has every test case the verification event expects, and every test case is
+``passed``; otherwise it is ``not-satisfied``. A test case recorded as
 ``passed`` must have ``ok: true`` on every one of its runs, test and control alike.
 
 Mapping rows that are not approved (see ``uas_oscal.mapping.is_approved``) are
@@ -42,13 +43,15 @@ from uas_oscal.mapping import DEFAULT_MAPPING, DEFAULT_REQUIREMENTS, REPO_ROOT, 
 
 DEFAULT_SUMMARY = REPO_ROOT / "data" / "upstream" / "evidence" / "ve07-ci" / "20261013-0d3ca38" / "summary.json"
 
-# Requirements each supported verification event verifies, and the assessment
-# plan its results import. P1's verification table also lists SR-010 for VE-07,
+# Requirements each supported verification event verifies, the test cases its
+# summary must record for its findings to be satisfied, and the assessment plan
+# its results import. P1's verification table also lists SR-010 for VE-07,
 # but that table is not vendored and SR-010 has no row in mappings/controls.yaml;
 # the pilot assesses SR-005 only (docs/ve07-walkthrough.md).
 VERIFICATION_EVENTS: dict[str, dict[str, Any]] = {
     "VE-07": {
         "requirements": ("SR-005",),
+        "test_cases": ("TC-01", "TC-03", "TC-04", "TC-05", "TC-10"),
         "plan": REPO_ROOT / "oscal" / "handwritten" / "ve07-assessment-plan.json",
     },
 }
@@ -249,6 +252,7 @@ def _finding_description(
     control: str,
     row: dict[str, Any],
     state: str,
+    missing: list[str],
 ) -> str:
     event = summary["event"]
     run_id = summary["environment"]["run_id"]
@@ -260,6 +264,8 @@ def _finding_description(
         cases = f"these test cases are not `passed`: {listed}"
     else:
         cases = f"test cases {', '.join(summary['test_cases'])} are all `passed`"
+    if missing:
+        cases += f". Expected test case(s) {', '.join(missing)} are missing from `test_cases`"
     parts = [
         f'Requirement {req_id}: "{statement}"',
         f"{event} CI run {run_id} at commit {commit} reports `passed: {passed}`, and {cases}. "
@@ -333,7 +339,14 @@ def build_assessment_results(
             }
         )
 
-    satisfied = summary["passed"] is True and all(v == "passed" for v in summary["test_cases"].values())
+    # A summary that leaves out an expected test case does not prove the requirement,
+    # even if everything it does record passed.
+    missing = [tc for tc in VERIFICATION_EVENTS[ve]["test_cases"] if tc not in summary["test_cases"]]
+    satisfied = (
+        summary["passed"] is True
+        and not missing
+        and all(v == "passed" for v in summary["test_cases"].values())
+    )
     state = "satisfied" if satisfied else "not-satisfied"
     findings = []
     for req_id, control, row in pairs:
@@ -342,7 +355,7 @@ def build_assessment_results(
                 "uuid": uuid5(f"finding/{run_name}/{req_id}/{control}"),
                 "title": f"{req_id} against {control_title(control)}: {state}",
                 "description": _finding_description(
-                    summary, requirements[req_id]["statement"], req_id, control, row, state
+                    summary, requirements[req_id]["statement"], req_id, control, row, state, missing
                 ),
                 "props": [_prop("requirement-id", req_id), _prop("mapping-status", row["status"])],
                 "target": {
