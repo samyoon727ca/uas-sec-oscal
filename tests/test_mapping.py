@@ -68,6 +68,23 @@ def test_shipped_rationales_quote_the_requirement():
             assert quote in statements[row["requirement_id"]], (row["requirement_id"], quote)
 
 
+def _shipped_row(req):
+    return next(row for row in load_mapping()["mappings"] if row["requirement_id"] == req)
+
+
+def test_shipped_sr007_rationale_addresses_the_anti_rollback_clause():
+    # Owner decision (#12): keep cm-14 and si-7.15 and say the rollback clause has no direct control.
+    row = _shipped_row("SR-007")
+    assert row["controls"] == ["cm-14", "si-7.15"]
+    assert '"newer than the installed version"' in row["rationale"]
+    assert "no direct" in row["rationale"]
+
+
+def test_shipped_sr013_maps_au3_without_au10():
+    # Owner decision (#12): a peer-attributed log is not non-repudiation, so AU-10 is dropped.
+    assert _shipped_row("SR-013")["controls"] == ["au-3"]
+
+
 # Valid input
 
 

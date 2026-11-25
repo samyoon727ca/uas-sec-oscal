@@ -119,7 +119,7 @@
               },
               {
                 "control-id": "cm-14",
-                "description": "SR-007: The CC shall install only update images that are signed with the MSS release key and newer than the installed version.\n\nMapped to `cm-14`: The CC \"shall install only update images that are signed with the MSS release key\", which prevents installation of software whose signature is not from a recognized certificate (CM-14) and authenticates code before installation (SI-7(15)).\n\nTraces to threats: THR-008, THR-041, THR-059.\n\nVerification events: VE-03.\n\nVerification: test (T), evidence in P3. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
+                "description": "SR-007: The CC shall install only update images that are signed with the MSS release key and newer than the installed version.\n\nMapped to `cm-14`: The CC \"shall install only update images that are signed with the MSS release key\", which prevents installation of software whose signature is not from a recognized certificate (CM-14) and authenticates code before installation (SI-7(15)). The requirement's anti-rollback clause, \"newer than the installed version\", has no direct 800-53 control: neither CM-14 nor SI-7(15) requires rejecting an older, validly signed image.\n\nTraces to threats: THR-008, THR-041, THR-059.\n\nVerification events: VE-03.\n\nVerification: test (T), evidence in P3. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
                 "props": [
                   {
                     "name": "requirement-id",
@@ -156,7 +156,7 @@
               },
               {
                 "control-id": "si-7.15",
-                "description": "SR-007: The CC shall install only update images that are signed with the MSS release key and newer than the installed version.\n\nMapped to `si-7.15`: The CC \"shall install only update images that are signed with the MSS release key\", which prevents installation of software whose signature is not from a recognized certificate (CM-14) and authenticates code before installation (SI-7(15)).\n\nTraces to threats: THR-008, THR-041, THR-059.\n\nVerification events: VE-03.\n\nVerification: test (T), evidence in P3. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
+                "description": "SR-007: The CC shall install only update images that are signed with the MSS release key and newer than the installed version.\n\nMapped to `si-7.15`: The CC \"shall install only update images that are signed with the MSS release key\", which prevents installation of software whose signature is not from a recognized certificate (CM-14) and authenticates code before installation (SI-7(15)). The requirement's anti-rollback clause, \"newer than the installed version\", has no direct 800-53 control: neither CM-14 nor SI-7(15) requires rejecting an older, validly signed image.\n\nTraces to threats: THR-008, THR-041, THR-059.\n\nVerification events: VE-03.\n\nVerification: test (T), evidence in P3. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
                 "props": [
                   {
                     "name": "requirement-id",
@@ -193,7 +193,7 @@
               },
               {
                 "control-id": "au-3",
-                "description": "SR-013: The CC shall log each command it forwards to the FC with a timestamp and either the sending WireGuard peer or a CC-originated marker.\n\nMapped to `au-3`: The CC \"shall log each command it forwards to the FC with a timestamp and either the sending WireGuard peer or a CC-originated marker\", so each record carries when the event occurred and its source (AU-3) and binds each command to the peer that sent it (AU-10).\n\nTraces to threats: THR-004.\n\nVerification events: VE-10.\n\nVerification: test (T), evidence in P4. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
+                "description": "SR-013: The CC shall log each command it forwards to the FC with a timestamp and either the sending WireGuard peer or a CC-originated marker.\n\nMapped to `au-3`: The CC \"shall log each command it forwards to the FC with a timestamp and either the sending WireGuard peer or a CC-originated marker\", so each record carries when the event occurred and its source (AU-3). AU-10 is not mapped: the log records the sending peer but does not give irrefutable evidence that the peer sent the command.\n\nTraces to threats: THR-004.\n\nVerification events: VE-10.\n\nVerification: test (T), evidence in P4. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
                 "props": [
                   {
                     "name": "requirement-id",
@@ -217,33 +217,6 @@
                   }
                 ],
                 "uuid": "72642f3a-a2e4-5b44-811f-5dbb48a9da52"
-              },
-              {
-                "control-id": "au-10",
-                "description": "SR-013: The CC shall log each command it forwards to the FC with a timestamp and either the sending WireGuard peer or a CC-originated marker.\n\nMapped to `au-10`: The CC \"shall log each command it forwards to the FC with a timestamp and either the sending WireGuard peer or a CC-originated marker\", so each record carries when the event occurred and its source (AU-3) and binds each command to the peer that sent it (AU-10).\n\nTraces to threats: THR-004.\n\nVerification events: VE-10.\n\nVerification: test (T), evidence in P4. Allocated to CMP-CC.\n\nDRAFT: this mapping row is `proposed`, not approved by the owner.",
-                "props": [
-                  {
-                    "name": "requirement-id",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "SR-013"
-                  },
-                  {
-                    "name": "mapping-status",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "proposed"
-                  },
-                  {
-                    "name": "threat-id",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "THR-004"
-                  },
-                  {
-                    "name": "verification-event",
-                    "ns": "https://github.com/samyoon727ca/uas-sec-oscal/ns/oscal",
-                    "value": "VE-10"
-                  }
-                ],
-                "uuid": "e5a81128-0f4b-55d6-8d61-441745e66035"
               }
             ],
             "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/v1.6.0/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
@@ -493,7 +466,7 @@
       }
     ],
     "metadata": {
-      "last-modified": "2026-11-21T13:48:49Z",
+      "last-modified": "2026-11-25T02:59:39Z",
       "oscal-version": "1.1.2",
       "remarks": "Generated by `uas-oscal component` from data/upstream/p1/requirements.csv, data/upstream/p1/trace.csv, data/upstream/p1/verification.csv and mappings/controls.yaml. Do not edit by hand.",
       "title": "UAS P2 verified-boot project: NIST SP 800-53 Rev. 5 control implementations (DRAFT)",
