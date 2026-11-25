@@ -29,15 +29,18 @@ mappings:
     rationale: >-
       The CC "shall install only update images that are signed with the MSS release key",
       which prevents installation of software whose signature is not from a recognized
-      certificate (CM-14) and authenticates code before installation (SI-7(15)).
+      certificate (CM-14) and authenticates code before installation (SI-7(15)). The
+      requirement's anti-rollback clause, "newer than the installed version", has no direct
+      800-53 control: neither CM-14 nor SI-7(15) requires rejecting an older, validly signed image.
     status: proposed
 
   - requirement_id: SR-013
-    controls: [au-3, au-10]
+    controls: [au-3]
     rationale: >-
       The CC "shall log each command it forwards to the FC with a timestamp and either the
       sending WireGuard peer or a CC-originated marker", so each record carries when the
-      event occurred and its source (AU-3) and binds each command to the peer that sent it (AU-10).
+      event occurred and its source (AU-3). AU-10 is not mapped: the log records the sending
+      peer but does not give irrefutable evidence that the peer sent the command.
     status: proposed
 
   - requirement_id: SR-027
