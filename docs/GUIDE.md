@@ -19,9 +19,9 @@ Three commands of the `uas-oscal` CLI (`src/uas_oscal/cli.py`) run in order. Eac
 
 ```text
 requirements.csv, trace.csv, verification.csv ─┐
-mappings/controls.yaml ────────────────────────┼─► uas-oscal component ─► oscal/generated/component-definition.json
-                                               │
-VE-07 summary.json + mapping + requirements ───┴─► uas-oscal results ───► oscal/generated/ve07-assessment-results.json
+mappings/controls.yaml ────────────────────────┴─► uas-oscal component ─► oscal/generated/component-definition.json
+
+VE-07 summary.json, mappings/controls.yaml, requirements.csv ─► uas-oscal results ─► oscal/generated/ve07-assessment-results.json
 
 both generated documents ─► uas-oscal render ─► docs/results/ve07.md
 all OSCAL JSON ─► scripts/validate.sh (oscal-cli)
