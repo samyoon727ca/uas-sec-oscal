@@ -5,6 +5,8 @@ The `uas_oscal` Python package reads P1 requirements and trace data and a P2 evi
 
 **Rendered VE-07 results: [docs/results/ve07.md](docs/results/ve07.md)**
 
+Guide to how the repo works and where it stands: [docs/GUIDE.md](docs/GUIDE.md)
+
 ## Pins
 
 | Tool | Version | Where |
