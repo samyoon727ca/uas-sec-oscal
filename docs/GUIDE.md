@@ -99,7 +99,7 @@ CI (`.github/workflows/ci.yml`) runs on every push and pull request:
 - **Vendored inputs are unmodified:** every file in `data/upstream/` matches `SHA256SUMS` (`tests/test_upstream.py`).
 - **Mapping validation:** malformed, unknown or duplicate rows are rejected, and the shipped rows are all `proposed` (`tests/test_mapping.py`). The same file also checks a few things about the shipped rationales, such as SR-007 addressing anti-rollback and SR-013 mapping AU-3 without AU-10.
 - **Component definition** (`tests/test_component.py`):
-  - The output is byte-identical across runs, has sorted keys and matches the committed file.
+  - The output is byte-identical across runs and has sorted keys. It matches the committed file when generated with the committed file's own `last-modified` (`tests/test_component.py:101-104`).
   - Its UUIDs follow the uuid5 scheme, and the catalog href is pinned to a release.
   - Each component holds only the requirements allocated to it, and the trace and verification links are present.
   - Draft marking follows the mapping.
@@ -123,6 +123,7 @@ Not tested or only documented:
 - Nothing checks that the mapping is correct. The rationales are proposals for the owner, and the tests only confirm a few phrases.
 - `scripts/install-oscal-cli.sh` has no test; CI exercises it.
 - `pytest` never runs oscal-cli, so a local `pytest` pass says nothing about OSCAL schema validity.
+- The component definition's `last-modified` is checked only by the CI `rebuild` job, which takes the date from git history. `pytest` reuses the committed date (`tests/test_component.py:101-104`), so it passes when that date is stale.
 - The vendored inputs are not checked against the live P2 repo, only against the recorded digests.
 
 ## Decisions and constraints
@@ -146,4 +147,5 @@ Not tested or only documented:
 - **Evidence is one fixed run.** Results come from a single vendored `summary.json`. Nothing pulls new CI evidence from P2 automatically; a refresh is a manual re-vendor (`data/upstream/PROVENANCE.md`).
 - **The README disagrees with itself on Java.** The Pins table says Java 17+ (`README.md:17`), while the validation section says oscal-cli needs "Java 11 or newer" (`README.md:92`). The install script says Java 11+ (`scripts/install-oscal-cli.sh:11`).
 - **Merging can make `last-modified` stale.** The date is the committer date of the last commit touching the inputs (`git log --format=%ct`, `src/uas_oscal/component.py:183`). A PR that changes an input and commits the regenerated output gets a new committer date when it is squash-merged, so the `rebuild` job fails on `main` until the output is regenerated again. This happened after #24.
+- **The README overstates the component test.** It says `tests/test_component.py` fails if the committed file is out of date (`README.md:66`), but a stale `last-modified` passes `pytest`. Only the `rebuild` job catches it.
 - **Install-tree defaults.** The CLI's default paths resolve against the checkout the package is installed from, not the current directory (`REPO_ROOT`, `src/uas_oscal/mapping.py:16`), so pass explicit paths when running from another checkout.
